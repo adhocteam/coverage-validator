@@ -1,1 +1,1 @@
-web: validator
+web: qhpvalidator
