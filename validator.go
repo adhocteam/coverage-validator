@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"html/template"
@@ -30,7 +32,8 @@ func main() {
 		log.Fatalln("new validator:", err.Error())
 	}
 
-	http.Handle("/", validator)
+	http.HandleFunc("/", validator.index)
+	http.Handle("/validate", validator)
 	http.HandleFunc("/schema/", func(w http.ResponseWriter, r *http.Request) {
 		var fn string
 		switch typ := r.URL.Path[len("/schema/"):]; typ {
@@ -46,6 +49,7 @@ func main() {
 		}
 		http.ServeFile(w, r, fn)
 	})
+
 	port := "8080"
 	if os.Getenv("PORT") != "" {
 		port = os.Getenv("PORT")
@@ -54,13 +58,17 @@ func main() {
 }
 
 type Validator struct {
-	schemas map[string]*js.Schema
+	schemas   map[string]*js.Schema
+	templates map[string]*template.Template
 }
 
 func NewValidator(plans, providers, drugs string) (*Validator, error) {
 	v := new(Validator)
 	v.schemas = make(map[string]*js.Schema)
+	v.templates = make(map[string]*template.Template)
+
 	var err error
+
 	for _, x := range []struct {
 		name     string
 		filename string
@@ -75,125 +83,71 @@ func NewValidator(plans, providers, drugs string) (*Validator, error) {
 			return nil, err
 		}
 	}
+
+	v.templates["index.html"], err = template.ParseFiles("index.html")
+	if err != nil {
+		return nil, err
+	}
+
 	return v, nil
 }
 
-func (v *Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var (
-		errors []string
-		valid  bool
-	)
-	jsonDoc := r.FormValue("json")
-	if r.FormValue("try") == "1" {
-		r.Method = "POST"
-		jsonDoc = plansExample
-	}
-	if r.Method == "POST" {
-		// Validate JSON
-		schema, ok := v.schemas[r.FormValue("doc-type")]
-		if !ok {
-			errors = []string{fmt.Sprintf("This document type schema not yet implemented: %q", r.FormValue("doc-type"))}
-			goto render
-		}
-		loader := js.NewStringLoader(jsonDoc)
-		result, err := schema.Validate(loader)
-		if err != nil {
-			errors = []string{
-				"JSON is not well-formed: " + err.Error(),
-			}
-		} else {
-			if result.Valid() {
-				valid = true
-			} else {
-				for _, err := range result.Errors() {
-					errors = append(errors, err.String())
-				}
-			}
-		}
-	}
-render:
-	t := template.Must(template.New("index").Parse(`
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>QHP provider and formulary JSON Schema validator</title>
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-    </head>
-    <body>
-		<div class="container">
-			<h1>QHP provider and formulary JSON Schema validator</h1>
-			<p>
-				<a href="https://github.com/CMSgov/QHP-provider-formulary-APIs">Click here for more information</a>
-				|
-				<a href="?try=1&amp;doc-type=plans">Try an example</a>
-			</p>
-			{{if .Errors}}
-				<div class="text-danger">
-					<p>This document is <b>not valid</b> {{.Type}} JSON:</p>
-					<ul>
-					{{range .Errors}}
-						<li>{{.}}
-					{{end}}
-					</ul>
-				</div>
-			{{end}}
-			{{if .Valid}}
-				<div class="text-success">
-					<p>This document is <b>valid</b> {{.Type}} JSON.</p>
-				</div>
-			{{end}}
-			{{if eq .Method "POST"}}
-			<pre>{{.JSON}}</pre>
-			<hr>
-			{{end}}
-			<form method="post" action="./">
-				<div class="form-group">
-					<label for="docType">JSON document type</label>
-					<select class="form-control" id="docType" name="doc-type" aria-describedby="docTypeHelp">
-						<option value="plans" selected>Plans</option>
-						<option value="providers">Providers</option>
-						<option value="drugs">Drugs</option>
-					</select>
-					<span id="docTypeHelp" class="help-block">The type of JSON document to be validated.</span>
-				</div>
-				<div class="form-group">
-					<label for="json">JSON</label>
-					<textarea class="form-control" rows="5" id="json" name="json" aria-describedby="helpBlock" required></textarea>
-					<span id="helpBlock" class="help-block">Paste in your JSON here.</span>
-				</div>
-				<button type="submit" class="btn btn-default">Validate</button>
-			</form>
-			<hr>
-			<footer>
-				<p>Dump schemas:
-				<ul>
-					<li><a href="/schema/plans">Plans</a>
-					<li><a href="/schema/providers">Providers</a>
-					<li><a href="/schema/drugs">Drugs</a>
-				</ul>
-			</footer>
-		</div>
-    </body>
-</html>`))
-	if err := t.Execute(w, struct {
-		Errors []string
-		Valid  bool
-		Method string
-		JSON   string
-		Type   string
+func (v *Validator) index(w http.ResponseWriter, r *http.Request) {
+	if err := v.templates["index.html"].Execute(w, struct {
+		Example string
 	}{
-		errors,
-		valid,
-		r.Method,
-		jsonDoc,
-		r.FormValue("doc-type"),
+		plansExample,
 	}); err != nil {
 		log.Printf("rendering html: %v", err)
 		http.Error(w, http.StatusText(500), 500)
 	}
+}
+
+func (v *Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, http.StatusText(405), 405)
+		return
+	}
+	var resp ValidationResult
+	render := func() {
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			http.Error(w, http.StatusText(500), 500)
+		}
+	}
+	jsonDoc := r.FormValue("json")
+	if r.FormValue("try") == "1" {
+		jsonDoc = plansExample
+	}
+	resp.Original = jsonDoc
+	resp.DocType = r.FormValue("doctype")
+	schema, ok := v.schemas[r.FormValue("doctype")]
+	if !ok {
+		resp.Errors = []string{fmt.Sprintf("This document type schema not yet implemented: %q", r.FormValue("doctype"))}
+		render()
+		return
+	}
+	loader := js.NewStringLoader(jsonDoc)
+	result, err := schema.Validate(loader)
+	if err != nil {
+		resp.Errors = []string{"JSON is not well-formed: " + err.Error()}
+	} else {
+		if result.Valid() {
+			resp.Valid = true
+			pprintJSON(&resp.Original)
+		} else {
+			for _, err := range result.Errors() {
+				resp.Errors = append(resp.Errors, err.String())
+			}
+		}
+	}
+	render()
+}
+
+type ValidationResult struct {
+	Valid    bool     `json:"valid"`
+	Errors   []string `json:"errors"`
+	DocType  string   `json:"doctype"`
+	Original string   `json:"original"`
 }
 
 func abs(path string) string {
@@ -202,6 +156,12 @@ func abs(path string) string {
 		panic(err)
 	}
 	return p
+}
+
+func pprintJSON(ugly *string) {
+	var out bytes.Buffer
+	json.Indent(&out, []byte(*ugly), "", "    ")
+	*ugly = out.String()
 }
 
 const plansExample = `

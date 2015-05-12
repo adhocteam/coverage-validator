@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>QHP provider and formulary JSON Schema validator</title>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+        <style>
+            textarea[name=json] { font-family: monospace; font-size: 12px; }
+        </style>
+    </head>
+    <body>
+		<div class="container">
+			<h2>QHP provider and formulary JSON Schema validator</h2>
+			<p>
+				<a href="https://github.com/CMSgov/QHP-provider-formulary-APIs">Click here for more information</a>
+				|
+				<a href="#" class="example">Try an example</a>
+			</p>
+            <div class="row">
+                <div class="col-md-7">
+                    <form method="post" action="/validate">
+                        <div class="form-group">
+                            <label for="docType">JSON document type</label>
+                            <select class="form-control" id="docType" name="doctype" aria-describedby="docTypeHelp">
+                                <option value="plans" selected>Plans</option>
+                                <option value="providers">Providers</option>
+                                <option value="drugs">Drugs</option>
+                            </select>
+                            <span id="docTypeHelp" class="help-block">The type of JSON document to be validated.</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="json">JSON</label>
+                            <textarea class="form-control" rows="20" id="json" name="json" aria-describedby="helpBlock" required></textarea>
+                            <span id="helpBlock" class="help-block">Paste in your JSON here.</span>
+                        </div>
+                        <input type="hidden" name="example" value="{{.Example}}">
+                        <button type="submit" class="btn btn-default">Validate</button>
+                    </form>
+                </div>
+                <div class="col-md-5">
+                    <div class="errors"></div>
+                    <pre class="original hide"></pre>
+                </div>
+            </div>
+			<hr>
+			<footer>
+				<p>Dump schemas:
+				<ul>
+					<li><a href="/schema/plans">Plans</a>
+					<li><a href="/schema/providers">Providers</a>
+					<li><a href="/schema/drugs">Drugs</a>
+				</ul>
+			</footer>
+		</div>
+        <script>
+        $(function() {
+            var valid = false;
+            var doctype = null;
+            var errors = [];
+            var original = null;
+            var submitted = false;
+
+            $('form').submit(function(e) {
+                e.preventDefault();
+                $.ajax({
+                    type: "POST",
+                    url: "/validate",
+                    data: $(this).serialize(),
+                    success: function(resp) {
+                        valid = resp.valid;
+                        errors = resp.errors;
+                        original = resp.original;
+                        doctype = resp.doctype;
+                        submitted = true;
+                        render();
+                    },
+                    dataType: "json"
+                });
+            });
+
+            $('.example').click(function(e) {
+                e.preventDefault();
+                $('[name="json"]').val($.trim($('[name="example"]').val()));
+                $('[name="doctype"]').val('plans');
+                $('form').submit();
+                return false;
+            });
+
+            function render() {
+                if (submitted) {
+                    var errorsTmpl = '<p>This document is <b>' + (valid ? 'valid' : 'not valid') + '</b> ' + doctype + ' JSON' + (valid ? '.' : ':');
+                    if (!valid && errors && errors.length > 0) {
+                        errorsTmpl += '<ul>';
+                        $(errors).each(function(i, err) {
+                            errorsTmpl += '<li>' + err;
+                        });
+                    }
+                    $('.errors').html(errorsTmpl);
+                    $('.errors').removeClass('text-danger text-success').addClass(valid ? 'text-success' : 'text-danger');
+                    $('.original').text(original).show();
+                }
+            }
+
+            render();
+        });
+        </script>
+    </body>
+</html>
