@@ -1,1 +1,1 @@
-web: qhpvalidator
+web: qhpvalidator plans_schema.json
