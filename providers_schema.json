@@ -6,7 +6,7 @@
         "individual": {
             "properties": {
                 "npi": {"type": "string"},
-                "type": {"type": "string", "enum": ["individual", "INDIVIDUAL"]},
+                "type": {"type": "string", "enum": ["INDIVIDUAL"]},
                 "plans": {"type": "array", "items": {"$ref": "#/definitions/plan"}},
                 "name": {"$ref": "#/definitions/name"},
                 "address": {"$ref": "#/definitions/address"},
@@ -19,7 +19,7 @@
         "facility": {
             "properties": {
                 "npi": {"type": "string"},
-                "type": {"type": "string", "enum": ["facility", "FACILITY"]},
+                "type": {"type": "string", "enum": ["FACILITY"]},
                 "plans": {"type": "array", "items": {"$ref": "#/definitions/plan"}},
                 "facility_name": {"type": "string"},
                 "facility_type": {"type": "string"},
