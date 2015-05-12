@@ -34,7 +34,11 @@ func main() {
 	http.HandleFunc("/schema", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, flag.Arg(0))
 	})
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	port := "8080"
+	if os.Getenv("PORT") != "" {
+		port = os.Getenv("PORT")
+	}
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 type Validator struct {
