@@ -161,7 +161,7 @@ render:
 				</div>
 				<div class="form-group">
 					<label for="json">JSON</label>
-					<textarea class="form-control" rows="5" id="json" name="json" aria-describedby="helpBlock"></textarea>
+					<textarea class="form-control" rows="5" id="json" name="json" aria-describedby="helpBlock" required></textarea>
 					<span id="helpBlock" class="help-block">Paste in your JSON here.</span>
 				</div>
 				<button type="submit" class="btn btn-default">Validate</button>
