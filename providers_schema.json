@@ -1,0 +1,60 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "array", "items": {"$ref": "#/definitions/provider"},
+    "definitions": {
+        "provider": {"type": "object", "oneOf": [{"$ref": "#/definitions/individual"}, {"$ref": "#/definitions/facility"}]},
+        "individual": {
+            "properties": {
+                "npi": {"type": "string"},
+                "type": {"type": "string", "enum": ["individual", "INDIVIDUAL"]},
+                "plans": {"type": "array", "items": {"$ref": "#/definitions/plan"}},
+                "name": {"$ref": "#/definitions/name"},
+                "address": {"$ref": "#/definitions/address"},
+                "phone": {"type": "string"},
+                "speciality": {"type": "string"},
+                "accepting": {"type": "boolean"}
+            },
+            "required": ["npi", "type", "plans", "name", "address", "phone", "accepting"]
+        },
+        "facility": {
+            "properties": {
+                "npi": {"type": "string"},
+                "type": {"type": "string", "enum": ["facility", "FACILITY"]},
+                "plans": {"type": "array", "items": {"$ref": "#/definitions/plan"}},
+                "facility_name": {"type": "string"},
+                "facility_type": {"type": "string"},
+                "address": {"$ref": "#/definitions/address"},
+                "phone": {"type": "string"}
+            },
+            "required": ["npi", "type", "plans", "facility_name", "facility_type", "address", "phone"]
+        },
+        "plan": {
+            "properties": {
+                "plan_id_type": {"type": "string", "enum": ["HIOS-PLAN-ID"]},
+                "plan_id": {"type": "string", "pattern": "^[0-9]{5}[A-Z]{2}[0-9]{7}$"},
+                "network_tier": {"type": "string", "pattern": "^[A-Z-]+$"}
+            },
+            "required": ["plan_id_type", "plan_id", "network_tier"]
+        },
+        "name": {
+            "properties": {
+                "prefix": {"type": ["string", "null"]},
+                "first": {"type": "string"},
+                "middle": {"type": "string"},
+                "last": {"type": "string"},
+                "suffix": {"type": ["string", "null"]}
+            },
+            "required": ["first", "middle", "last"]
+        },
+        "address": {
+            "properties": {
+                "address": {"type": "string"},
+                "address_2": {"type": "string"},
+                "city": {"type": "string"},
+                "state": {"type": "string", "pattern": "^[A-Z]{2}$"},
+                "zip": {"type": "string", "pattern": "^[0-9]{5}$"}
+            },
+            "required": ["address", "city", "state", "zip"]
+        }
+    }
+}

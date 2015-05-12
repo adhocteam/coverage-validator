@@ -14,18 +14,18 @@ import (
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s <plans_schema.json>\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s <plans_schema.json> <providers_schema.json> <drugs_schema.json>\n", os.Args[0])
 		flag.PrintDefaults()
 	}
 
 	flag.Parse()
 
-	if flag.NArg() < 1 {
+	if flag.NArg() != 3 {
 		flag.Usage()
 		os.Exit(1)
 	}
 
-	validator, err := NewValidator(flag.Arg(0))
+	validator, err := NewValidator(flag.Arg(0), flag.Arg(1), flag.Arg(2))
 	if err != nil {
 		log.Fatalln("new validator:", err.Error())
 	}
@@ -45,12 +45,25 @@ type Validator struct {
 	schemas map[string]*js.Schema
 }
 
-func NewValidator(plansSchemaPath string) (*Validator, error) {
+func NewValidator(plans, providers, drugs string) (*Validator, error) {
 	v := new(Validator)
 	v.schemas = make(map[string]*js.Schema)
 	var err error
-	v.schemas["plans"], err = js.NewSchema(js.NewReferenceLoader("file://" + abs(plansSchemaPath)))
-	return v, err
+	for _, x := range []struct {
+		name     string
+		filename string
+	}{
+		{"plans", plans},
+		{"providers", providers},
+		{"drugs", drugs},
+	} {
+		v.schemas[x.name], err = js.NewSchema(js.NewReferenceLoader("file://" + abs(x.filename)))
+		if err != nil {
+			log.Printf(x.name)
+			return nil, err
+		}
+	}
+	return v, nil
 }
 
 func (v *Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -119,9 +132,9 @@ render:
 				<div class="form-group">
 					<label for="docType">JSON document type</label>
 					<select class="form-control" id="docType" name="doc-type" aria-describedby="docTypeHelp">
-						<option value="plans" selected>Plans</option>
-						<option value="providers" disabled>Providers</option>
-						<option value="drugs" disabled>Drugs</option>
+						<option value="plans">Plans</option>
+						<option value="providers">Providers</option>
+						<option value="drugs">Drugs</option>
 					</select>
 					<span id="docTypeHelp" class="help-block">The type of JSON document to be validated.</span>
 				</div>

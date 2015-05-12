@@ -5,7 +5,7 @@
         "plan": {
             "properties": {
                 "plan_id_type": {"type": "string", "enum": ["HIOS-PLAN-ID"]},
-                "plan_id": {"type": "string"},
+                "plan_id": {"type": "string", "pattern": "^[0-9]{5}[A-Z]{2}[0-9]{7}$"},
                 "marketing_name": {"type": "string"},
                 "summary_url": {"type": "string"},
                 "marketing_url": {"type": "string"},

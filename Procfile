@@ -1,1 +1,1 @@
-web: qhpvalidator plans_schema.json
+web: qhpvalidator plans_schema.json providers_schema.json drugs_schema.json
