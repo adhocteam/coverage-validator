@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "type": "array", "items": {"$ref": "#/definitions/plan"},
+    "type": "array", "items": {"$ref": "#/definitions/plan"}, "minItems": 1,
     "definitions": {
         "plan": {
             "properties": {

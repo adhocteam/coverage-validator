@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "type": "array", "items": {"$ref": "#/definitions/drug"},
+    "type": "array", "items": {"$ref": "#/definitions/drug"}, "minItems": 1,
     "definitions": {
         "drug": {
             "properties": {

@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "type": "array", "items": {"$ref": "#/definitions/provider"},
+    "type": "array", "items": {"$ref": "#/definitions/provider"}, "minItems": 1,
     "definitions": {
         "provider": {"type": "object", "oneOf": [{"$ref": "#/definitions/individual"}, {"$ref": "#/definitions/facility"}]},
         "individual": {
