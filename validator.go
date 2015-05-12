@@ -62,13 +62,10 @@ func main() {
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
-type Validator struct {
-	schemas map[string]*js.Schema
-}
+type Validator map[string]*js.Schema
 
-func NewValidator(plans, providers, drugs string) (*Validator, error) {
-	v := new(Validator)
-	v.schemas = make(map[string]*js.Schema)
+func NewValidator(plans, providers, drugs string) (Validator, error) {
+	v := make(Validator)
 	var err error
 	for _, x := range []struct {
 		name     string
@@ -78,7 +75,7 @@ func NewValidator(plans, providers, drugs string) (*Validator, error) {
 		{"providers", providers},
 		{"drugs", drugs},
 	} {
-		v.schemas[x.name], err = js.NewSchema(js.NewReferenceLoader("file://" + abs(x.filename)))
+		v[x.name], err = js.NewSchema(js.NewReferenceLoader("file://" + abs(x.filename)))
 		if err != nil {
 			log.Printf(x.name)
 			return nil, err
@@ -87,7 +84,7 @@ func NewValidator(plans, providers, drugs string) (*Validator, error) {
 	return v, nil
 }
 
-func (v *Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (v Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, http.StatusText(405), 405)
 		return
@@ -101,7 +98,7 @@ func (v *Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	jsonDoc := r.FormValue("json")
 	resp.PPrint = jsonDoc
 	resp.DocType = r.FormValue("doctype")
-	schema, ok := v.schemas[r.FormValue("doctype")]
+	schema, ok := v[r.FormValue("doctype")]
 	if !ok {
 		resp.Errors = []string{fmt.Sprintf("This document type schema not yet implemented: %q", r.FormValue("doctype"))}
 		render()
