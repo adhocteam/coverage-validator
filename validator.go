@@ -132,7 +132,7 @@ render:
 			</p>
 			{{if .Errors}}
 				<div class="text-danger">
-					<p>This document is <b>not valid</b>:</p>
+					<p>This document is <b>not valid</b> {{.Type}} JSON:</p>
 					<ul>
 					{{range .Errors}}
 						<li>{{.}}
@@ -142,7 +142,7 @@ render:
 			{{end}}
 			{{if .Valid}}
 				<div class="text-success">
-					<p>This document is <b>valid</b>.</p>
+					<p>This document is <b>valid</b> {{.Type}} JSON.</p>
 				</div>
 			{{end}}
 			{{if eq .Method "POST"}}
@@ -183,11 +183,13 @@ render:
 		Valid  bool
 		Method string
 		JSON   string
+		Type   string
 	}{
 		errors,
 		valid,
 		r.Method,
 		jsonDoc,
+		r.FormValue("doc-type"),
 	}); err != nil {
 		log.Printf("rendering html: %v", err)
 		http.Error(w, http.StatusText(500), 500)
