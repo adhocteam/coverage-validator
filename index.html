@@ -9,6 +9,7 @@
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
         <style>
             textarea[name=json] { font-family: monospace; font-size: 12px; }
+            .errors p { padding: 15px; }
         </style>
     </head>
     <body>
@@ -40,9 +41,8 @@
                         <button type="submit" class="btn btn-default">Validate</button>
                     </form>
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-5 results">
                     <div class="errors"></div>
-                    <pre class="original hide"></pre>
                 </div>
             </div>
 			<hr>
@@ -60,7 +60,7 @@
             var valid = false;
             var doctype = null;
             var errors = [];
-            var original = null;
+            var pprint = null;
             var submitted = false;
 
             $('form').submit(function(e) {
@@ -72,7 +72,7 @@
                     success: function(resp) {
                         valid = resp.valid;
                         errors = resp.errors;
-                        original = resp.original;
+                        pprint = resp.pprint;
                         doctype = resp.doctype;
                         submitted = true;
                         render();
@@ -91,16 +91,15 @@
 
             function render() {
                 if (submitted) {
-                    var errorsTmpl = '<p>This document is <b>' + (valid ? 'valid' : 'not valid') + '</b> ' + doctype + ' JSON' + (valid ? '.' : ':');
+                    var errorsTmpl = '<p class="' + (valid ? 'bg-success' : 'bg-danger') + '">This document is <b>' + (valid ? 'valid' : 'not valid') + '</b> ' + doctype + ' JSON.';
                     if (!valid && errors && errors.length > 0) {
-                        errorsTmpl += '<ul>';
+                        errorsTmpl += '<p class="text-danger">' + errors.length + ' ' + (errors.length === 1 ? 'error' : 'errors') + ':</p>';
+                        errorsTmpl += '<ul class="' + (valid ? 'text-success' : 'text-danger') + '">';
                         $(errors).each(function(i, err) {
                             errorsTmpl += '<li>' + err;
                         });
                     }
                     $('.errors').html(errorsTmpl);
-                    $('.errors').removeClass('text-danger text-success').addClass(valid ? 'text-success' : 'text-danger');
-                    $('.original').text(original).show();
                 }
             }
 

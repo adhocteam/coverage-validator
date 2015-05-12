@@ -118,7 +118,7 @@ func (v *Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.FormValue("try") == "1" {
 		jsonDoc = plansExample
 	}
-	resp.Original = jsonDoc
+	resp.PPrint = jsonDoc
 	resp.DocType = r.FormValue("doctype")
 	schema, ok := v.schemas[r.FormValue("doctype")]
 	if !ok {
@@ -133,10 +133,11 @@ func (v *Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		if result.Valid() {
 			resp.Valid = true
-			pprintJSON(&resp.Original)
+			pprintJSON(&resp.PPrint)
 		} else {
 			for _, err := range result.Errors() {
-				resp.Errors = append(resp.Errors, err.String())
+				msg := err.Context.String() + ": " + err.Description
+				resp.Errors = append(resp.Errors, msg)
 			}
 		}
 	}
@@ -144,10 +145,10 @@ func (v *Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type ValidationResult struct {
-	Valid    bool     `json:"valid"`
-	Errors   []string `json:"errors"`
-	DocType  string   `json:"doctype"`
-	Original string   `json:"original"`
+	Valid   bool     `json:"valid"`
+	Errors  []string `json:"errors"`
+	DocType string   `json:"doctype"`
+	PPrint  string   `json:"pprint"`
 }
 
 func abs(path string) string {
