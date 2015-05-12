@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -32,7 +31,13 @@ func main() {
 		log.Fatalln("new validator:", err.Error())
 	}
 
-	http.HandleFunc("/", validator.index)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "index.html")
+	})
+	http.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "docs.html")
+	})
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.Handle("/validate", validator)
 	http.HandleFunc("/schema/", func(w http.ResponseWriter, r *http.Request) {
 		var fn string
@@ -58,17 +63,13 @@ func main() {
 }
 
 type Validator struct {
-	schemas   map[string]*js.Schema
-	templates map[string]*template.Template
+	schemas map[string]*js.Schema
 }
 
 func NewValidator(plans, providers, drugs string) (*Validator, error) {
 	v := new(Validator)
 	v.schemas = make(map[string]*js.Schema)
-	v.templates = make(map[string]*template.Template)
-
 	var err error
-
 	for _, x := range []struct {
 		name     string
 		filename string
@@ -83,24 +84,7 @@ func NewValidator(plans, providers, drugs string) (*Validator, error) {
 			return nil, err
 		}
 	}
-
-	v.templates["index.html"], err = template.ParseFiles("index.html")
-	if err != nil {
-		return nil, err
-	}
-
 	return v, nil
-}
-
-func (v *Validator) index(w http.ResponseWriter, r *http.Request) {
-	if err := v.templates["index.html"].Execute(w, struct {
-		Example string
-	}{
-		plansExample,
-	}); err != nil {
-		log.Printf("rendering html: %v", err)
-		http.Error(w, http.StatusText(500), 500)
-	}
 }
 
 func (v *Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -115,9 +99,6 @@ func (v *Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	jsonDoc := r.FormValue("json")
-	if r.FormValue("try") == "1" {
-		jsonDoc = plansExample
-	}
 	resp.PPrint = jsonDoc
 	resp.DocType = r.FormValue("doctype")
 	schema, ok := v.schemas[r.FormValue("doctype")]
@@ -164,67 +145,3 @@ func pprintJSON(ugly *string) {
 	json.Indent(&out, []byte(*ugly), "", "    ")
 	*ugly = out.String()
 }
-
-const plansExample = `
-[
-    {
-        "plan_id_type": "HIOS-PLAN-ID",
-        "plan_id": "12345XX9876543",
-        "marketing_name": "Sample Gold Health Plan",
-        "summary_url": "http://url/to/summary/benefits/coverage",
-        "marketing_url": "http://url/to/health/plan/information",
-        "plan_contact": "email@address.com",
-        "network": [
-            {
-                "network_tier": "PREFERRED"
-            },
-            {
-                "network_tier": "NON-PREFERRED"
-            }
-        ],
-        "formulary": [
-            {
-                "drug_tier": "GENERIC",
-                "mail_order": true,
-                "cost_sharing": [
-                    {
-                        "pharmacy_type": "1-MONTH-IN-RETAIL",
-                        "copay_amount": 20.0,
-                        "copay_opt": "AFTER-DEDUCTIBLE",
-                        "coinsurance_rate": 0.10,
-                        "coinsurance_opt": "BEFORE-DEDUCTIBLE"
-                    },
-                    {
-                        "pharmacy_type": "1-MONTH-IN-MAIL",
-                        "copay_amount": 0.0,
-                        "copay_opt": "NO-CHARGE",
-                        "coinsurance_rate": 0.20,
-                        "coinsurance_opt": null
-                    }
-                ]
-            },
-            {
-                "drug_tier": "BRAND",
-                "mail_order": true,
-                "cost_sharing": [
-                    {
-                        "pharmacy_type": "1-MONTH-IN-RETAIL",
-                        "copay_amount": 15.0,
-                        "copay_opt": null,
-                        "coinsurance_rate": 0.0,
-                        "coinsurance_opt": null
-                    },
-                    {
-                        "pharmacy_type": "1-MONTH-IN-MAIL",
-                        "copay_amount": 20.0,
-                        "copay_opt": "AFTER-DEDUCTIBLE",
-                        "coinsurance_rate": 0.10,
-                        "coinsurance_opt": "BEFORE-DEDUCTIBLE"
-                    }
-                ]
-            }
-        ],
-        "last_updated_on": "2015-03-17"
-    }
-]
-`

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>QHP, provider, and formulary JSON Schema validator | Docs</title>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <p><a href="/">&lsaquo; Back to Validator</a></p>
+            <h3>QHP, provider, and formulary JSON Schema validator</h3>
+            <h2>Documentation</h2>
+
+            <p>This tool validates the schema of JSON documents against the
+                specifications for qualified health plans (QHPs), providers, and
+                drugs as detailed by <a
+                href="https://github.com/CMSgov/QHP-provider-formulary-APIs">this GitHub project</a>.
+            </p>
+
+            <p>The schemas it defines conform to <a
+                href="http://json-schema.org/documentation.html">JSON Schema specification draft v4</a>.
+            </p>
+
+            <h4>Usage</h4>
+
+            <h5>Interactive form</h5>
+
+            <p>The most basic usage is to paste in the contents of a JSON
+            document to the form on <a href="/">this page</a>, selecting the
+            document type, and hitting the submit button to get a validation
+            report.</p>
+
+            <p align="center"><img src="/static/validator_example.gif" width="960" style="border: 2px solid #ccc; padding: 10px"></p>
+
+            <h5>Web service</h5>
+
+            <p>The tool provides a resource at <code>/validate</code> for
+            validating JSON documents via AJAX or other HTTP clients libraries.
+            It is intended for use in validating multiple documents
+            non-interactively.
+            </p>
+
+            <p>The resource expects to be requested via HTTP <code>POST</code>, and expects two values in the body of the request:
+            <ul>
+                <li><b><code>doctype</code></b>: one of <code>plans</code>, <code>providers</code>, or <code>drugs</code>; and
+                <li><b><code>json</code></b>: a string of the JSON document to be validated.
+            </ul>
+
+            <p>For example, assume <code>plans.json</code> is a local file containing the document to be validated:
+            </p>
+
+            <pre>$ curl -F doctype=plans -F json=\&lt;plans.json http://qhp-validator.herokuapp.com/validate
+{"valid":true,"errors":null,"doctype":"plans","pprint":"[...]"}</pre>
+
+        </div>
+    </body>
+</html>
