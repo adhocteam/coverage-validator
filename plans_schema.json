@@ -38,9 +38,7 @@
             "properties": {
                 "pharmacy_type": {"type": "string"},
                 "copay_amount": {"type": "number"},
-                "copay_opt": {"type": ["string", "null"]},
-                "coinsurance_rate": {"type": "number", "minimum": 0, "maximum": 100},
-                "coinsurance_opt": {"type": ["string", "null"]}
+                "coinsurance_rate": {"type": "number", "minimum": 0, "maximum": 100}
             },
             "required": ["pharmacy_type", "copay_amount", "coinsurance_rate"]
         },
