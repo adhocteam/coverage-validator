@@ -11,7 +11,12 @@
                 "name": {"$ref": "#/definitions/name"},
                 "address": {"$ref": "#/definitions/address"},
                 "phone": {"type": "string"},
-                "speciality": {"type": "string"},
+                "speciality": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "accepting": {"type": "boolean"}
             },
             "required": ["npi", "type", "plans", "name", "address", "phone", "accepting"]
