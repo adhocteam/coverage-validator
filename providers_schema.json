@@ -44,7 +44,7 @@
                 "last": {"type": "string"},
                 "suffix": {"type": ["string", "null"]}
             },
-            "required": ["first", "middle", "last"]
+            "required": ["first", "last"]
         },
         "address": {
             "properties": {
