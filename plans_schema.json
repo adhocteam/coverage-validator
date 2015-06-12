@@ -9,6 +9,7 @@
                 "marketing_name": {"type": "string"},
                 "summary_url": {"type": "string", "format": "uri"},
                 "marketing_url": {"type": "string", "format": "uri"},
+                "formulary_url": {"type": "string", "format": "uri"},
                 "plan_contact": {"type": "string", "format": "email"},
                 "network": {"type": "array", "items": {"$ref": "#/definitions/network"}},
                 "formulary": {"type": "array", "items": {"$ref": "#/definitions/formulary"}},
