@@ -22,6 +22,12 @@
                     }
                 },
                 "accepting": {"type": "boolean"},
+                "languages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "gender": {"type": "string"},
                 "last_updated_on": {
                     "type": "string",
