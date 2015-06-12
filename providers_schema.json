@@ -1,19 +1,10 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "type": "object",
-    "properties": {
-        "providers": {
-            "type": "array",
-            "items": {
-                "$ref": "#/definitions/provider"
-            },
-            "minItems": 1
-        },
-        "last_updated_on": {
-            "type": "string",
-            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
-        }
+    "type": "array",
+    "items": {
+        "$ref": "#/definitions/provider"
     },
+    "minItems": 1,
     "definitions": {
         "provider": {"type": "object", "oneOf": [{"$ref": "#/definitions/individual"}, {"$ref": "#/definitions/facility"}]},
         "individual": {
@@ -31,7 +22,11 @@
                     }
                 },
                 "accepting": {"type": "boolean"},
-                "gender": {"type": "string"}
+                "gender": {"type": "string"},
+                "last_updated_on": {
+                    "type": "string",
+                    "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+                }
             },
             "required": ["npi", "type", "plans", "name", "address", "phone", "accepting"]
         },
