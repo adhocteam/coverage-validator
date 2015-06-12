@@ -17,7 +17,8 @@
                         "type": "string"
                     }
                 },
-                "accepting": {"type": "boolean"}
+                "accepting": {"type": "boolean"},
+                "gender": {"type": "string"}
             },
             "required": ["npi", "type", "plans", "name", "address", "phone", "accepting"]
         },
