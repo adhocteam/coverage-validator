@@ -27,7 +27,12 @@
                 "type": {"type": "string", "enum": ["FACILITY"]},
                 "plans": {"type": "array", "items": {"$ref": "#/definitions/plan"}},
                 "facility_name": {"type": "string"},
-                "facility_type": {"type": "string"},
+                "facility_type": {
+                    "type": "array"
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "address": {"$ref": "#/definitions/address"},
                 "phone": {"type": "string"}
             },
