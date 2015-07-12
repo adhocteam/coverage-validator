@@ -37,7 +37,7 @@
                             <textarea class="form-control" rows="20" id="json" name="json" aria-describedby="helpBlock" required></textarea>
                             <span id="helpBlock" class="help-block">Paste in your JSON here.</span>
                         </div>
-                        <button type="submit" class="btn btn-default">Validate</button>
+                        <button type="submit" class="btn btn-default" id="validate-btn">Validate</button>
                     </form>
                 </div>
                 <div class="col-md-5 results">
@@ -61,25 +61,27 @@
             var valid = false;
             var doctype = null;
             var errors = [];
-            var pprint = null;
             var submitted = false;
             var example = null;
 
             $('form').submit(function(e) {
                 e.preventDefault();
-                $.ajax({
+                $('#validate-btn, #json').prop('disabled', true);
+                var jqXhr = $.ajax({
                     type: "POST",
                     url: "/validate",
                     data: $(this).serialize(),
                     success: function(resp) {
                         valid = resp.valid;
                         errors = resp.errors;
-                        pprint = resp.pprint;
                         doctype = resp.doctype;
                         submitted = true;
                         render();
                     },
                     dataType: "json"
+                });
+                jqXhr.always(function() {
+                    $('#validate-btn, #json').prop('disabled', false);
                 });
             });
 

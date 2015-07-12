@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -96,7 +95,6 @@ func (v Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	jsonDoc := r.FormValue("json")
-	resp.PPrint = jsonDoc
 	resp.DocType = r.FormValue("doctype")
 	schema, ok := v[r.FormValue("doctype")]
 	if !ok {
@@ -111,7 +109,6 @@ func (v Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		if result.Valid() {
 			resp.Valid = true
-			pprintJSON(&resp.PPrint)
 		} else {
 			for _, err := range result.Errors() {
 				msg := err.Context.String() + ": " + err.Description
@@ -126,7 +123,6 @@ type ValidationResult struct {
 	Valid   bool     `json:"valid"`
 	Errors  []string `json:"errors"`
 	DocType string   `json:"doctype"`
-	PPrint  string   `json:"pprint"`
 }
 
 func abs(path string) string {
@@ -135,10 +131,4 @@ func abs(path string) string {
 		panic(err)
 	}
 	return p
-}
-
-func pprintJSON(ugly *string) {
-	var out bytes.Buffer
-	json.Indent(&out, []byte(*ugly), "", "    ")
-	*ugly = out.String()
 }
