@@ -59,7 +59,7 @@ func main() {
 	if os.Getenv("PORT") != "" {
 		port = os.Getenv("PORT")
 	}
-	addr := net.JoinHostPort("127.0.0.1", port)
+	addr := net.JoinHostPort("0.0.0.0", port)
 	done := make(chan struct{})
 	go func() {
 		log.Fatal(http.ListenAndServe(addr, nil))
