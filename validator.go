@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -58,7 +59,14 @@ func main() {
 	if os.Getenv("PORT") != "" {
 		port = os.Getenv("PORT")
 	}
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	addr := net.JoinHostPort("127.0.0.1", port)
+	done := make(chan struct{})
+	go func() {
+		log.Fatal(http.ListenAndServe(addr, nil))
+		done <- struct{}{}
+	}()
+	log.Printf("validator listening on http://%s/", addr)
+	<-done
 }
 
 type Validator map[string]*js.Schema
