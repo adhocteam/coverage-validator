@@ -9,7 +9,10 @@
         "provider": {"type": "object", "oneOf": [{"$ref": "#/definitions/individual"}, {"$ref": "#/definitions/facility"}]},
         "individual": {
             "properties": {
-                "npi": {"type": "string"},
+                "npi": {
+                    "type": "string",
+                    "pattern": "^[0-9]{10}$"
+                },
                 "type": {"type": "string", "enum": ["INDIVIDUAL"]},
                 "plans": {"type": "array", "items": {"$ref": "#/definitions/plan"}},
                 "name": {"$ref": "#/definitions/name"},
@@ -41,7 +44,10 @@
         },
         "facility": {
             "properties": {
-                "npi": {"type": "string"},
+                "npi": {
+                    "type": "string",
+                    "pattern": "^[0-9]{10}$"
+                },
                 "type": {"type": "string", "enum": ["FACILITY"]},
                 "plans": {"type": "array", "items": {"$ref": "#/definitions/plan"}},
                 "facility_name": {"type": "string"},
