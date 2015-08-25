@@ -10,3 +10,13 @@ It offers two interfaces:
 
 * A web form for pasting JSON content and getting a validation report, and
 * A web service for POST'ing JSON content (to `/validate`, see [docs](https://qhp-validator.herokuapp.com/) for details) for automated or programmatic validation.
+
+## Local development
+
+### Prequisites
+
+Godep
+
+``` shell
+$ go get github.com/tools/godep
+```
