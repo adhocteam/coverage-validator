@@ -12,11 +12,11 @@
                 "formulary_url": {"type": "string", "format": "uri"},
                 "plan_contact": {"type": "string", "format": "email"},
                 "network": {"type": "array", "items": {"$ref": "#/definitions/network"}},
-                "formulary": {"type": "array", "items": {"$ref": "#/definitions/formulary"}},
+                "formulary": {"$ref": "#/definitions/formulary"},
                 "benefits": {"type": "array", "items": {"$ref": "#/definitions/benefit"}},
                 "last_updated_on": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"}
             },
-            "required": ["plan_id_type", "plan_id", "marketing_name", "summary_url", "plan_contact", "network", "formulary", "last_updated_on"]
+            "required": ["plan_id_type", "plan_id", "network", "formulary", "last_updated_on"]
         },
         "network": {
             "type": "object",
