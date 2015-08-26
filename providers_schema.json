@@ -23,7 +23,7 @@
                         "type": "string"
                     }
                 },
-                "accepting": {"type": "boolean"},
+                "accepting": {"type": "string", "enum": ["accepting", "not accepting", "accepting in some locations"]},
                 "languages": {
                     "type": "array",
                     "items": {
