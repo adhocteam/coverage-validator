@@ -19,7 +19,7 @@
                 "step_therapy": {"type": "boolean"},
                 "quantity_limit": {"type": "boolean"}
             },
-            "required": ["plan_id_type", "plan_id", "drug_tier"]
+            "required": ["plan_id_type", "plan_id", "drug_tier", "prior_authorization", "step_therapy", "quantity_limit"]
         }
     }
 }
