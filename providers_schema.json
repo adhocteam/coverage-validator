@@ -39,7 +39,7 @@
                     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
                 }
             },
-            "required": ["npi", "type", "plans", "name", "addresses", "phone", "accepting", "speciality"]
+            "required": ["npi", "type", "plans", "name", "addresses", "accepting", "speciality"]
         },
         "facility": {
             "properties": {
@@ -58,7 +58,7 @@
                 },
                 "addresses": {"type": "array", "items": {"$ref": "#/definitions/address"}}
             },
-            "required": ["npi", "type", "plans", "facility_name", "facility_type", "address", "phone"]
+            "required": ["npi", "type", "plans", "facility_name", "facility_type", "addresses"]
         },
         "plan": {
             "properties": {
@@ -87,7 +87,7 @@
                 "zip": {"type": "string", "pattern": "^[0-9]{5}$"},
                 "phone": {"type": "string"}
             },
-            "required": ["address", "city", "state", "zip"]
+            "required": ["address", "city", "state", "zip", "phone"]
         }
     }
 }
