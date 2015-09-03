@@ -25,14 +25,25 @@
             },
             "required": ["network_tier"]
         },
+        "formulary_tier": {
+          "type": "object",
+          "properties": {
+              "drug_tier": {"type": "string"},
+              "mail_order": {"type": "boolean"},
+              "cost_sharing": {"type": "array", "items": {"$ref": "#/definitions/cost_sharing"}}
+          },
+          "required": ["drug_tier", "mail_order"]
+        },
         "formulary": {
-            "type": "object",
-            "properties": {
-                "drug_tier": {"type": "string"},
-                "mail_order": {"type": "boolean"},
-                "cost_sharing": {"type": "array", "items": {"$ref": "#/definitions/cost_sharing"}}
-            },
-            "required": ["drug_tier", "mail_order"]
+            "oneOf": [
+              {
+                "type": "array",
+                "items": {"$ref": "#/definitions/formulary_tier"}
+              },
+              {
+                "$ref": "#/definitions/formulary_tier"
+              }
+            ]
         },
         "cost_sharing": {
             "type": "object",
