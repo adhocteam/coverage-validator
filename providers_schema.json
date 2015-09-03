@@ -44,7 +44,7 @@
         "facility": {
             "properties": {
                 "npi": {
-                    "type": "string",
+                    "type": ["string", "null"],
                     "pattern": "^[0-9]{10}$"
                 },
                 "type": {"type": "string", "enum": ["FACILITY"]},
