@@ -28,7 +28,7 @@
         "formulary_tier": {
           "type": "object",
           "properties": {
-              "drug_tier": {"type": "string"},
+              "drug_tier": {"type": "string", "pattern": "^[A-Z-]+$"},
               "mail_order": {"type": "boolean"},
               "cost_sharing": {"type": "array", "items": {"$ref": "#/definitions/cost_sharing"}}
           },
