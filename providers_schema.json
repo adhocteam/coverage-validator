@@ -39,7 +39,7 @@
                     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
                 }
             },
-            "required": ["npi", "type", "plans", "name", "addresses", "accepting", "speciality"]
+            "required": ["npi", "type", "plans", "name", "addresses", "accepting", "speciality", "last_updated_on"]
         },
         "facility": {
             "properties": {
@@ -56,9 +56,13 @@
                         "type": "string"
                     }
                 },
-                "addresses": {"type": "array", "items": {"$ref": "#/definitions/address"}}
+                "addresses": {"type": "array", "items": {"$ref": "#/definitions/address"}},
+                "last_updated_on": {
+                    "type": "string",
+                    "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+                }
             },
-            "required": ["npi", "type", "plans", "facility_name", "facility_type", "addresses"]
+            "required": ["npi", "type", "plans", "facility_name", "facility_type", "addresses", "last_updated_on"]
         },
         "plan": {
             "properties": {
@@ -87,7 +91,7 @@
                 "zip": {"type": "string", "pattern": "^[0-9]{5}$"},
                 "phone": {"type": "string"}
             },
-            "required": ["address", "city", "state", "zip", "phone"]
+        "required": ["address", "city", "state", "zip", "phone"]
         }
     }
 }
