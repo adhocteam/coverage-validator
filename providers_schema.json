@@ -16,7 +16,11 @@
                 "type": {"type": "string", "enum": ["INDIVIDUAL"]},
                 "plans": {"type": "array", "items": {"$ref": "#/definitions/plan"}},
                 "name": {"$ref": "#/definitions/name"},
-                "addresses": {"type": "array", "items": {"$ref": "#/definitions/address"}},
+                "addresses": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/address"},
+                    "minItems": 1
+                },
                 "speciality": {
                     "type": "array",
                     "items": {
@@ -42,6 +46,7 @@
             "required": ["npi", "type", "plans", "name", "addresses", "accepting", "speciality", "last_updated_on"]
         },
         "facility": {
+            "type": "object",
             "properties": {
                 "npi": {
                     "type": ["string", "null"],
@@ -65,6 +70,7 @@
             "required": ["npi", "type", "plans", "facility_name", "facility_type", "addresses", "last_updated_on"]
         },
         "plan": {
+            "type": "object",
             "properties": {
                 "plan_id_type": {"type": "string", "enum": ["HIOS-PLAN-ID"]},
                 "plan_id": {"type": "string", "pattern": "^[0-9]{5}[A-Z]{2}[0-9]{7}$"},
@@ -73,6 +79,7 @@
             "required": ["plan_id_type", "plan_id", "network_tier"]
         },
         "name": {
+            "type": "object",
             "properties": {
                 "prefix": {"type": ["string", "null"]},
                 "first": {"type": "string"},
@@ -84,6 +91,7 @@
         },
         "address": {
             "properties": {
+            "type": "object",
                 "address": {"type": "string"},
                 "address_2": {"type": "string"},
                 "city": {"type": "string"},
@@ -91,7 +99,7 @@
                 "zip": {"type": "string", "pattern": "^[0-9]{5}$"},
                 "phone": {"type": "string"}
             },
-        "required": ["address", "city", "state", "zip", "phone"]
+            "required": ["address", "city", "state", "zip", "phone"]
         }
     }
 }
