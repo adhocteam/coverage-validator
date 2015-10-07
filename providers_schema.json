@@ -8,6 +8,7 @@
     "definitions": {
         "provider": {"type": "object", "oneOf": [{"$ref": "#/definitions/individual"}, {"$ref": "#/definitions/facility"}]},
         "individual": {
+            "type": "object",
             "properties": {
                 "npi": {
                     "type": ["string", "null"],
@@ -90,8 +91,8 @@
             "required": ["first", "last"]
         },
         "address": {
-            "properties": {
             "type": "object",
+            "properties": {
                 "address": {"type": "string"},
                 "address_2": {"type": "string"},
                 "city": {"type": "string"},

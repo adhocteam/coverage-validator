@@ -3,6 +3,7 @@
     "type": "array", "items": {"$ref": "#/definitions/drug"}, "minItems": 1,
     "definitions": {
         "drug": {
+            "type": "object",
             "properties": {
                 "rxnorm_id": {"type": "string"},
                 "drug_name": {"type": "string"},
@@ -11,6 +12,7 @@
             "required": ["rxnorm_id", "drug_name", "plans"]
         },
         "plan": {
+            "type": "object",
             "properties": {
                 "plan_id_type": {"type": "string", "enum": ["HIOS-PLAN-ID"]},
                 "plan_id": {"type": "string", "pattern": "^[0-9]{5}[A-Z]{2}[0-9]{7}$"},
