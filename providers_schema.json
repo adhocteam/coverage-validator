@@ -11,7 +11,7 @@
             "type": "object",
             "properties": {
                 "npi": {
-                    "type": ["string", "null"],
+                    "type": "string",
                     "pattern": "^[0-9]{10}$"
                 },
                 "type": {"type": "string", "enum": ["INDIVIDUAL"]},
@@ -50,7 +50,7 @@
             "type": "object",
             "properties": {
                 "npi": {
-                    "type": ["string", "null"],
+                    "type": "string",
                     "pattern": "^[0-9]{10}$"
                 },
                 "type": {"type": "string", "enum": ["FACILITY"]},
