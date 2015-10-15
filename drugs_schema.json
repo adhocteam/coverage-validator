@@ -5,7 +5,7 @@
         "drug": {
             "type": "object",
             "properties": {
-                "rxnorm_id": {"type": "string"},
+                "rxnorm_id": {"type": ["string", "null"]},
                 "drug_name": {"type": "string"},
                 "plans": {"type": "array", "items": {"$ref": "#/definitions/plan"}}
             },
