@@ -55,7 +55,7 @@
                 },
                 "type": {"type": "string", "enum": ["FACILITY"]},
                 "plans": {"type": "array", "items": {"$ref": "#/definitions/plan"}},
-                "facility_name": {"type": "string"},
+                "facility_name": {"type": "string", "minLength": 1},
                 "facility_type": {
                     "type": "array",
                     "items": {
@@ -83,9 +83,9 @@
             "type": "object",
             "properties": {
                 "prefix": {"type": ["string", "null"]},
-                "first": {"type": "string"},
+                "first": {"type": "string", "minLength": 1},
                 "middle": {"type": "string"},
-                "last": {"type": "string"},
+                "last": {"type": "string", "minLength": 1},
                 "suffix": {"type": ["string", "null"]}
             },
             "required": ["first", "last"]
@@ -93,12 +93,12 @@
         "address": {
             "type": "object",
             "properties": {
-                "address": {"type": "string"},
+                "address": {"type": "string", "minLength": 1},
                 "address_2": {"type": "string"},
-                "city": {"type": "string"},
+                "city": {"type": "string", "minLength": 1},
                 "state": {"type": "string", "pattern": "^[A-Z]{2}$"},
                 "zip": {"type": "string", "pattern": "^[0-9]{5}$"},
-                "phone": {"type": "string"}
+                "phone": {"type": "string", "minLength": 1}
             },
             "required": ["address", "city", "state", "zip", "phone"]
         }
