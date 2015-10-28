@@ -98,7 +98,7 @@
                 "city": {"type": "string", "minLength": 1},
                 "state": {"type": "string", "pattern": "^[A-Z]{2}$"},
                 "zip": {"type": "string", "pattern": "^[0-9]{5}$"},
-                "phone": {"type": "string", "minLength": 1}
+                "phone": {"type": "string"}
             },
             "required": ["address", "city", "state", "zip", "phone"]
         }
