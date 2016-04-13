@@ -118,9 +118,10 @@
             "properties": {
                 "plan_id_type": {"type": "string", "enum": ["HIOS-PLAN-ID"]},
                 "plan_id": {"type": "string", "pattern": "^[0-9]{5}[A-Z]{2}[0-9]{7}$"},
-                "network_tier": {"type": "string", "pattern": "^[A-Z-]+$"}
+                "network_tier": {"type": "string", "pattern": "^[A-Z-]+$"},
+                "years": {"type": "array", "items": {"type": "number"}, "minItems": 1}
             },
-            "required": ["plan_id_type", "plan_id", "network_tier"]
+            "required": ["plan_id_type", "plan_id", "network_tier", "years"]
         },
         "name": {
             "type": "object",

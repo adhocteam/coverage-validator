@@ -19,9 +19,10 @@
                 "drug_tier": {"type": "string", "pattern": "^[A-Z-]+$"},
                 "prior_authorization": {"type": "boolean"},
                 "step_therapy": {"type": "boolean"},
-                "quantity_limit": {"type": "boolean"}
+                "quantity_limit": {"type": "boolean"},
+                "years": {"type": "array", "items": {"type": "number"}, "minItems": 1}
             },
-            "required": ["plan_id_type", "plan_id", "drug_tier"]
+            "required": ["plan_id_type", "plan_id", "drug_tier", "years"]
         }
     }
 }
