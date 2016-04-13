@@ -22,7 +22,7 @@
                     "items": {"$ref": "#/definitions/address"},
                     "minItems": 1
                 },
-                "speciality": {
+                "specialty": {
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -44,7 +44,7 @@
                     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
                 }
             },
-            "required": ["npi", "type", "plans", "name", "addresses", "accepting", "speciality", "last_updated_on"]
+            "required": ["npi", "type", "plans", "name", "addresses", "accepting", "specialty", "last_updated_on"]
         },
         "facility": {
             "type": "object",
