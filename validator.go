@@ -2,8 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -14,21 +17,33 @@ import (
 )
 
 func main() {
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s <plans_schema.json> <providers_schema.json> <drugs_schema.json>\n", os.Args[0])
-		flag.PrintDefaults()
-	}
+	var (
+		plansSchema     = flag.String("plans", "plans_schema.json", "plans JSON schema")
+		providersSchema = flag.String("providers", "providers_schema.json", "providers JSON schema")
+		drugsSchema     = flag.String("drugs", "drugs_schema.json", "drugs JSON schema")
+		indexSchema     = flag.String("index", "index_schema.json", "index JSON schema")
+	)
 
 	flag.Parse()
 
-	if flag.NArg() != 3 {
-		flag.Usage()
-		os.Exit(1)
-	}
+	validator := NewValidator()
 
-	validator, err := NewValidator(flag.Arg(0), flag.Arg(1), flag.Arg(2))
-	if err != nil {
-		log.Fatalln("new validator:", err.Error())
+	for _, s := range []struct {
+		name, filename string
+	}{
+		{"plans", *plansSchema},
+		{"providers", *providersSchema},
+		{"drugs", *drugsSchema},
+		{"index", *indexSchema},
+	} {
+		f, err := os.Open(s.filename)
+		if err != nil {
+			log.Fatalf("opening %s schema from file %s: %v", s.name, s.filename, err)
+		}
+		if err := validator.Add(s.name, f); err != nil {
+			log.Fatalf("adding %s schema from file %s: %v", s.name, s.filename)
+		}
+		f.Close()
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -40,19 +55,8 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.Handle("/validate", validator)
 	http.HandleFunc("/schema/", func(w http.ResponseWriter, r *http.Request) {
-		var fn string
-		switch typ := r.URL.Path[len("/schema/"):]; typ {
-		case "plans":
-			fn = flag.Arg(0)
-		case "providers":
-			fn = flag.Arg(1)
-		case "drugs":
-			fn = flag.Arg(2)
-		default:
-			http.Error(w, http.StatusText(404), 404)
-			return
-		}
-		http.ServeFile(w, r, fn)
+		schemaName := r.URL.Path[len("/schema/"):]
+		validator.ServeFile(schemaName, w)
 	})
 
 	port := "8080"
@@ -69,26 +73,54 @@ func main() {
 	<-done
 }
 
-type Validator map[string]*js.Schema
+type Validator map[string]*schema
 
-func NewValidator(plans, providers, drugs string) (Validator, error) {
-	v := make(Validator)
+type schema struct {
+	parsed   *js.Schema
+	contents []byte
+}
+
+func NewValidator() Validator {
+	return make(Validator)
+}
+
+func (v Validator) Add(name string, r io.Reader) error {
 	var err error
-	for _, x := range []struct {
-		name     string
-		filename string
-	}{
-		{"plans", plans},
-		{"providers", providers},
-		{"drugs", drugs},
-	} {
-		v[x.name], err = js.NewSchema(js.NewReferenceLoader("file://" + abs(x.filename)))
-		if err != nil {
-			log.Printf(x.name)
-			return nil, err
-		}
+	s := &schema{}
+	s.contents, err = ioutil.ReadAll(r)
+	if err != nil {
+		return err
 	}
-	return v, nil
+	s.parsed, err = js.NewSchema(js.NewStringLoader(string(s.contents)))
+	if err != nil {
+		return err
+	}
+	v[name] = s
+	return nil
+}
+
+var ErrSchemaUnknown = errors.New("validator: unknown schema")
+
+func (v Validator) Validate(schemaName string, jsonDoc string) (*js.Result, error) {
+	schema, ok := v[schemaName]
+	if !ok {
+		return nil, ErrSchemaUnknown
+	}
+	loader := js.NewStringLoader(jsonDoc)
+	return schema.parsed.Validate(loader)
+}
+
+func (v Validator) ServeFile(schemaName string, w http.ResponseWriter) {
+	schema, ok := v[schemaName]
+	if !ok {
+		http.Error(w, http.StatusText(404), 404)
+		return
+	}
+	w.Header().Set("Content-Type", "text/plain")
+	if _, err := w.Write(schema.contents); err != nil {
+		log.Printf("error writing schema %s contents to HTTP response: %v", err)
+		http.Error(w, http.StatusText(500), 500)
+	}
 }
 
 func (v Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -103,16 +135,15 @@ func (v Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	jsonDoc := r.FormValue("json")
-	resp.DocType = r.FormValue("doctype")
-	schema, ok := v[r.FormValue("doctype")]
-	if !ok {
-		resp.Errors = []string{fmt.Sprintf("This document type schema not yet implemented: %q", r.FormValue("doctype"))}
-		render()
-		return
-	}
-	loader := js.NewStringLoader(jsonDoc)
-	result, err := schema.Validate(loader)
+	schemaName := r.FormValue("schema")
+	resp.Schema = schemaName
+	result, err := v.Validate(schemaName, jsonDoc)
 	if err != nil {
+		if err == ErrSchemaUnknown {
+			resp.Errors = []string{fmt.Sprintf("This schema is unknown: %q", r.FormValue("schema"))}
+			render()
+			return
+		}
 		resp.Errors = []string{"JSON is not well-formed: " + err.Error()}
 	} else {
 		if result.Valid() {
@@ -128,9 +159,9 @@ func (v Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type ValidationResult struct {
-	Valid   bool     `json:"valid"`
-	Errors  []string `json:"errors"`
-	DocType string   `json:"doctype"`
+	Valid  bool     `json:"valid"`
+	Errors []string `json:"errors"`
+	Schema string   `json:"schema"`
 }
 
 func abs(path string) string {

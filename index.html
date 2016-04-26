@@ -24,13 +24,14 @@
                 <div class="col-md-7">
                     <form method="post" action="/validate">
                         <div class="form-group">
-                            <label for="docType">JSON document type</label>
-                            <select class="form-control" id="docType" name="doctype" aria-describedby="docTypeHelp">
+                            <label for="schema">JSON schema</label>
+                            <select class="form-control" id="schema" name="schema" aria-describedby="schemaHelp">
                                 <option value="plans" selected>Plans</option>
                                 <option value="providers">Providers</option>
                                 <option value="drugs">Drugs</option>
+                                <option value="index">Index</option>
                             </select>
-                            <span id="docTypeHelp" class="help-block">The type of JSON document to be validated.</span>
+                            <span id="schemaHelp" class="help-block">The schema of the JSON document to be validated.</span>
                         </div>
                         <div class="form-group">
                             <label for="json">JSON</label>
@@ -51,6 +52,7 @@
                     <li><a href="/schema/plans">Plans</a>
                     <li><a href="/schema/providers">Providers</a>
                     <li><a href="/schema/drugs">Drugs</a>
+                    <li><a href="/schema/index">Index</a>
                 </ul>
                 <hr>
                 <p align="center"><a href="https://github.com/adhocteam/qhp-validator">Fork this project on GitHub</a></p>
@@ -59,7 +61,7 @@
         <script>
         $(function() {
             var valid = false;
-            var doctype = null;
+            var schema = null;
             var errors = [];
             var submitted = false;
             var example = null;
@@ -73,7 +75,7 @@
                     success: function(resp) {
                         valid = resp.valid;
                         errors = resp.errors;
-                        doctype = resp.doctype;
+                        schema = resp.schema;
                         submitted = true;
                         render();
                     },
@@ -89,7 +91,7 @@
                 e.preventDefault();
                 var fn = function() {
                     $('[name="json"]').val(example);
-                    $('[name="doctype"]').val('plans');
+                    $('[name="schema"]').val('plans');
                     $('form').submit();
                 };
                 if (!example) {
@@ -105,7 +107,7 @@
 
             function render() {
                 if (submitted) {
-                    var errorsTmpl = '<p class="' + (valid ? 'bg-success' : 'bg-danger') + '">This document is <b>' + (valid ? 'valid' : 'not valid') + '</b> ' + doctype + ' JSON.';
+                    var errorsTmpl = '<p class="' + (valid ? 'bg-success' : 'bg-danger') + '">This document is <b>' + (valid ? 'valid' : 'not valid') + '</b> ' + schema + ' JSON.';
                     if (!valid && errors && errors.length > 0) {
                         errorsTmpl += '<p class="text-danger">' + errors.length + ' ' + (errors.length === 1 ? 'error' : 'errors') + ':</p>';
                         errorsTmpl += '<ul class="' + (valid ? 'text-success' : 'text-danger') + '">';

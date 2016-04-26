@@ -1,0 +1,28 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+        "provider_urls": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "format": "uri"
+            }
+        },
+        "formulary_urls": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "format": "uri"
+            }
+        },
+        "plan_urls": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "format": "uri"
+            }
+        }
+    },
+    "required": ["provider_urls", "formulary_urls", "plan_urls"]
+}
