@@ -22,8 +22,38 @@
             </p>
             <div class="row">
                 <div class="col-md-7">
+                    <form method="post" action="/validate" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <h3>Validate a File</h3>
+                            <label for="schema">JSON schema</label>
+                            <select class="form-control" id="schema" name="schema" aria-describedby="schemaHelp">
+                                <option value="plans" selected>Plans</option>
+                                <option value="providers">Providers</option>
+                                <option value="drugs">Drugs</option>
+                                <option value="index">Index</option>
+                            </select>
+                            <span id="schemaHelp" class="help-block">The schema of the JSON document to be validated.</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="btn btn-default btn-file">
+                            Pick a File <input id="file" type="file" onchange="validateFile()" style="display: none;">
+                            </label>
+			            <h5><p id="fileName"></p></h5>
+                        <button type="submit" class="btn btn-default" id="validate-file-btn">Validate</button>
+                        </div>
+                    </form>
+                </div>
+                 <div class="col-md-5 results">
+                    <div class="file-errors"></div>
+                </div>
+            </div>
+            <hr>
+
+            <div class="row">
+                <div class="col-md-7">
                     <form method="post" action="/validate">
                         <div class="form-group">
+                            <h3>Validate Json Copy/Paste</h3>
                             <label for="schema">JSON schema</label>
                             <select class="form-control" id="schema" name="schema" aria-describedby="schemaHelp">
                                 <option value="plans" selected>Plans</option>
@@ -59,32 +89,76 @@
             </footer>
         </div>
         <script>
+        function validateFile() {
+            var file = document.getElementById('file');
+            document.getElementById('fileName').innerHTML = "Uploaded " + file.files[0].name;
+            return false
+        }
+
         $(function() {
             var valid = false;
             var schema = null;
             var errors = [];
             var submitted = false;
+            var fileValidation = false;
             var example = null;
 
             $('form').submit(function(e) {
                 e.preventDefault();
-                var jqXhr = $.ajax({
-                    type: "POST",
-                    url: "/validate",
-                    data: $(this).serialize(),
-                    success: function(resp) {
-                        valid = resp.valid;
-                        errors = resp.errors;
-                        schema = resp.schema;
-                        submitted = true;
-                        render();
-                    },
-                    dataType: "json"
-                });
-                jqXhr.always(function() {
-                    $('#validate-btn, #json').prop('disabled', false);
-                });
-                $('#validate-btn, #json').prop('disabled', true);
+                var file = document.getElementById("file");
+                jsonText = document.getElementById('json');
+                if (jsonText.value == '' && file.value != '') {
+                    var schemaDoc = document.getElementById('schema')
+                    var schemaVal = schemaDoc.value
+                    schema = schemaVal
+                    var data = new FormData();
+                    data.append('schema', schemaVal)
+                    data.append('json', $('input[type=file]')[0].files[0])                
+                    var jqXhr = $.ajax({
+                        type: "POST",   
+                        url: "/validate",
+                        cache: false,
+                        data: data,
+                        contentType: false,
+                        processData: false,
+                        success: function(resp) {
+                            valid = resp.valid;
+                            errors = resp.errors;
+                            schema = resp.schema;
+                            submitted = true;
+                            fileValidation = true;
+                            render();
+                        },
+                        dataType: "json"
+                        });
+                    jqXhr.always(function() {
+                        $('#validate-file-btn, #json').prop('disabled', false);
+                    });
+                    $('#validate-file-btn, #json').prop('disabled', true);
+                } else {
+                    fileValidation = false;
+
+                    var jqXhr = $.ajax({
+                        type: "POST",
+                        url: "/validate",
+                        data: $(this).serialize(),
+                        success: function(resp) {
+                            valid = resp.valid;
+                            errors = resp.errors;
+                            schema = resp.schema;
+                            fileValidation = false;
+                            submitted = true;
+                            render();
+                        },
+                        dataType: "json"
+                    });
+                    jqXhr.always(function() {
+                        $('#validate-btn, #json').prop('disabled', false);
+                    });
+                    $('#validate-btn, #json').prop('disabled', true);
+                }
+
+                
             });
 
             $('.example').click(function(e) {
@@ -109,13 +183,23 @@
                 if (submitted) {
                     var errorsTmpl = '<p class="' + (valid ? 'bg-success' : 'bg-danger') + '">This document is <b>' + (valid ? 'valid' : 'not valid') + '</b> ' + schema + ' JSON.';
                     if (!valid && errors && errors.length > 0) {
-                        errorsTmpl += '<p class="text-danger">' + errors.length + ' ' + (errors.length === 1 ? 'error' : 'errors') + ':</p>';
+                        length = errors[0].split(";").length
+                        errorsTmpl += '<p class="text-danger">' + length + ' ' + (length === 1 ? 'error' : 'errors') + ':</p>';
                         errorsTmpl += '<ul class="' + (valid ? 'text-success' : 'text-danger') + '">';
+
                         $(errors).each(function(i, err) {
-                            errorsTmpl += '<li>' + err;
+				            var errorList = err.split(";")
+                            for(var i in errorList) {
+                                errorsTmpl += '<li>' + errorList[i];
+                            }
                         });
                     }
-                    $('.errors').html(errorsTmpl);
+                    console.log(fileValidation)
+                    if (fileValidation) {
+                        $('.file-errors').html(errorsTmpl);    
+                    } else {
+                        $('.errors').html(errorsTmpl);
+                    }
                 }
             }
 

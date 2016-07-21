@@ -22,7 +22,7 @@
                     "items": {"$ref": "#/definitions/address"},
                     "minItems": 1
                 },
-                "speciality": {
+                "specialty": {
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -44,7 +44,7 @@
                     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
                 }
             },
-            "required": ["npi", "type", "plans", "name", "addresses", "accepting", "speciality", "last_updated_on"]
+            "required": ["npi", "type", "plans", "name", "addresses", "accepting", "specialty", "last_updated_on"]
         },
         "facility": {
             "type": "object",
@@ -75,9 +75,14 @@
             "properties": {
                 "plan_id_type": {"type": "string", "enum": ["HIOS-PLAN-ID"]},
                 "plan_id": {"type": "string", "pattern": "^[0-9]{5}[A-Z]{2}[0-9]{7}$"},
-                "network_tier": {"type": "string", "pattern": "^[A-Z-]+$"}
+                "network_tier": {"type": "string", "pattern": "^[A-Z-]+$"},
+                "years": {"type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
             },
-            "required": ["plan_id_type", "plan_id", "network_tier"]
+            "required": ["plan_id_type", "plan_id", "network_tier", "years"]
         },
         "name": {
             "type": "object",
