@@ -1,1 +1,1 @@
-program: bin/program
+program: bin/coverage-validator

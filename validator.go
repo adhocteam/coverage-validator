@@ -27,7 +27,7 @@ var (
 )
 
 func main() {
-	dbConnectionInfo := os.Getenv("DB_CONN_INFO")
+	dbConnectionInfo := os.Getenv("DATABASE_URL")
 	logger = &log.Logger{
 		Out:       os.Stderr,
 		Formatter: &log.TextFormatter{FullTimestamp: true},
