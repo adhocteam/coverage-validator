@@ -1,1 +1,1 @@
-program: bin/coverage-validator
+web: bin/coverage-validator
