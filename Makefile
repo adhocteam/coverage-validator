@@ -1,9 +1,12 @@
+TARGET_OS=linux
+TARGET_ARCH=amd64
+
 all: bin/coverage-validator
 
 .PHONY: cross-compile
 
 cross-compile:
-	GOOS=linux GOARCH=amd64 go install
+	GOOS=$(TARGET_OS) GOARCH=$(TARGET_ARCH) go install
 
 bin/coverage-validator: cross-compile
-	cp $$GOPATH/$@ $@
+	cp $$GOPATH/bin/$(TARGET_OS)_$(TARGET_ARCH)/$(notdir $@) $@
