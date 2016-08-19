@@ -1,4 +1,9 @@
-all: serve
+all: bin/coverage-validator
 
-serve:
-	godep go run validator.go plans_schema.json providers_schema.json drugs_schema.json
+.PHONY: cross-compile
+
+cross-compile:
+	GOOS=linux GOARCH=amd64 go install
+
+bin/coverage-validator: cross-compile
+	cp $$GOPATH/$@ $@
