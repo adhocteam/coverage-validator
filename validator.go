@@ -248,7 +248,7 @@ func renderError(w http.ResponseWriter, resp *ValidationResult, err error) {
 			resp.Errors = []string{fmt.Sprintf("This schema is unknown: %q", resp.Schema)}
 			render()
 		}
-		resp.Errors = []string{"JSON is not well-formed: " + err.Error()}
+		resp.Errors = []string{err.Error()}
 		render()
 	}
 

@@ -11,6 +11,7 @@
             .errors p { padding: 15px; }
             h2 small { color: #c00; font-size: smaller; }
             .beta { color: green; font-family: monospace; }
+            .help { color: grey; font-size: smaller; }
         </style>
     </head>
     <body>
@@ -39,6 +40,9 @@
                             Select file <input id="file" type="file" style="display: none;">
                             </label>
 			            <h5><p id="fileName"></p></h5>
+                        <p class="help">
+                            Click ‘validate’ to review the selected file. Please note that validation may take several minutes.
+                        </p>
                         <button type="submit" class="btn btn-default" id="validate-file-btn">Validate</button>
                         </div>
                     </form>
