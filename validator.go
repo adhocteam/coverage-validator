@@ -180,7 +180,6 @@ func (v Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
 		resp = multipartFormValidate(v, w, r)
-
 	} else {
 		jsonDoc := r.FormValue("json")
 		err := v.Validate(r.FormValue("schema"), bytes.NewBufferString(jsonDoc))
