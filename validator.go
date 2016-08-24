@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,73 +11,60 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
-	"time"
 
-	"github.com/CMSgov/marketplace-api/marketplace/adapters"
 	"github.com/CMSgov/marketplace-api/marketplace/coverage"
-	"github.com/CMSgov/marketplace-api/marketplace/drivers"
 
 	log "github.com/Sirupsen/logrus"
 	js "github.com/xeipuuv/gojsonschema"
 )
 
 var (
-	logger       *log.Logger
-	providerRepo adapters.DBProviderRepo
+	logger    *log.Logger
+	npiLookup *coverage.InMemoryNPILookup
 )
 
+func loadNPIs() {
+	file, err := os.Open("npis.csv")
+	if err != nil {
+		logger.Fatalf("error occurred while reading npi file: %v", err)
+	}
+
+	npiLookup = coverage.NewInMemoryNPILookup()
+	row := 0
+	reader := csv.NewReader(file)
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			logger.Fatalf("error occurred while reading npi file: %v", err)
+		}
+		if row == 0 {
+			row++
+			continue
+		}
+
+		npi, err := strconv.Atoi(record[0])
+		entity, err := strconv.Atoi(record[1])
+		if err != nil {
+			logger.Infof("error occurred when converting npi,entity string '%s', '%s' to int", record[0], record[1])
+		}
+		npiLookup.NPIProviderType[npi] = entity
+	}
+	logger.Infof("loaded %d npis into memory", len(npiLookup.NPIProviderType))
+}
+
 func main() {
-	dbConnectionInfo := os.Getenv("DB_CONN_INFO")
 	logger = &log.Logger{
 		Out:       os.Stderr,
 		Formatter: &log.TextFormatter{FullTimestamp: true},
 		Level:     log.InfoLevel,
 	}
 
-	dbUp := make(chan error)
-	const maxDbAttempts = 2
-	dbconn := func(conninfo string, done chan<- error) (*drivers.PostgresHandler, error) {
-		var dbErr error
-
-		handler, err := drivers.NewPostgresHandler(dbConnectionInfo, logger)
-		if err != nil {
-			return nil, err
-		}
-
-		go func() {
-			for i := 0; i < maxDbAttempts; i++ {
-				time.Sleep(time.Duration(i) * time.Second)
-				if dbErr = handler.TestConnection(); dbErr != nil {
-					logger.WithError(dbErr).Error("db connection error")
-					continue
-				}
-				break
-			}
-			dbUp <- dbErr
-		}()
-
-		return handler, nil
-	}
-
-	dbHandler, err := dbconn(dbConnectionInfo, dbUp)
-	if err != nil {
-		panic(err)
-	}
-
-	waitDbUp := func(dbUp <-chan error) {
-		if err = <-dbUp; err != nil {
-			fmt.Printf("err = %+v\n", err)
-			logger.WithError(err).Fatalf("couldn't connect to db, giving up")
-		}
-	}
-
-	waitDbUp(dbUp)
-
-	dbHandlers := make(map[string]adapters.DBHandler)
-	dbHandlers["DBProviderRepo"] = dbHandler
-
-	providerRepo = *adapters.NewDBProviderRepo(dbHandlers)
+	loadNPIs()
 	validator := NewValidator()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -99,10 +87,10 @@ func main() {
 	addr := net.JoinHostPort("0.0.0.0", port)
 	done := make(chan struct{})
 	go func() {
-		log.Fatal(http.ListenAndServe(addr, nil))
+		logger.Fatal(http.ListenAndServe(addr, nil))
 		done <- struct{}{}
 	}()
-	log.Printf("validator listening on http://%s/", addr)
+	logger.Infof("validator listening on http://%s/", addr)
 	<-done
 }
 
@@ -140,7 +128,7 @@ func (v Validator) Validate(schemaName string, jsonDoc io.Reader) error {
 		validator := &coverage.StreamingProviderValidator{
 			Dec: json.NewDecoder(jsonDoc),
 		}
-		return validator.Valid(&providerRepo)
+		return validator.Valid(npiLookup)
 
 	case "drugs":
 		validator := coverage.NewStreamingDrugValidator(jsonDoc)
