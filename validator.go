@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -23,13 +24,15 @@ import (
 var (
 	logger    *log.Logger
 	npiLookup *coverage.InMemoryNPILookup
+	npiFile   = flag.String("d", "npis.csv", "Path to NPI file")
 )
 
-func loadNPIs() {
-	file, err := os.Open("npis.csv")
+func loadNPIs() error {
+	file, err := os.Open(*npiFile)
 	if err != nil {
-		logger.Fatalf("error occurred while reading npi file: %v", err)
+		return fmt.Errorf("error occured while opening npi file: %s", *npiFile)
 	}
+	defer file.Close()
 
 	npiLookup = coverage.NewInMemoryNPILookup()
 	row := 0
@@ -40,31 +43,45 @@ func loadNPIs() {
 			break
 		}
 		if err != nil {
-			logger.Fatalf("error occurred while reading npi file: %v", err)
+			return fmt.Errorf("error occurred while reading npi file: %v", err)
 		}
+
 		if row == 0 {
 			row++
 			continue
 		}
 
 		npi, err := strconv.Atoi(record[0])
-		entity, err := strconv.Atoi(record[1])
+
 		if err != nil {
-			logger.Infof("error occurred when converting npi,entity string '%s', '%s' to int", record[0], record[1])
+			logger.Infof("error occurred when converting npi string '%s' to int", record[0])
+			return err
 		}
-		npiLookup.NPIProviderType[npi] = entity
+		// some npis in the file do not have types associated with them
+		if record[1] != "" {
+			entity, err := strconv.Atoi(record[1])
+			if err != nil {
+				logger.Infof("error occurred when converting entity string '%s' to int", record[1])
+				return err
+			}
+			npiLookup.NPIProviderType[npi] = entity
+		}
 	}
 	logger.Infof("loaded %d npis into memory", len(npiLookup.NPIProviderType))
+	return nil
 }
 
 func main() {
+	flag.Parse()
 	logger = &log.Logger{
 		Out:       os.Stderr,
 		Formatter: &log.TextFormatter{FullTimestamp: true},
 		Level:     log.InfoLevel,
 	}
 
-	loadNPIs()
+	if err := loadNPIs(); err != nil {
+		logger.Fatalf("error loading npis: %v", err)
+	}
 	validator := NewValidator()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -142,8 +159,6 @@ func (v Validator) Validate(schemaName string, jsonDoc io.Reader) error {
 	default:
 		return ErrSchemaUnknown
 	}
-
-	return nil
 }
 
 func (v Validator) ServeFile(schemaName string, w http.ResponseWriter) {
@@ -154,7 +169,7 @@ func (v Validator) ServeFile(schemaName string, w http.ResponseWriter) {
 	}
 	w.Header().Set("Content-Type", "text/plain")
 	if _, err := w.Write(schema.contents); err != nil {
-		log.Printf("error writing schema %s contents to HTTP response: %v", err)
+		log.Printf("error writing schema %s contents to HTTP response: %v", schemaName, err)
 		http.Error(w, http.StatusText(500), 500)
 	}
 }
