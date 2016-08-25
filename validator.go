@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -77,7 +78,35 @@ func main() {
 	dbHandlers["DBProviderRepo"] = dbHandler
 
 	providerRepo = *adapters.NewDBProviderRepo(dbHandlers)
+
+	var (
+		plansSchema     = flag.String("plans", "plans_schema.json", "plans JSON schema")
+		providersSchema = flag.String("providers", "providers_schema.json", "providers JSON schema")
+		drugsSchema     = flag.String("drugs", "drugs_schema.json", "drugs JSON schema")
+		indexSchema     = flag.String("index", "index_schema.json", "index JSON schema")
+	)
+
+	flag.Parse()
+
 	validator := NewValidator()
+
+	for _, s := range []struct {
+		name, filename string
+	}{
+		{"plans", *plansSchema},
+		{"providers", *providersSchema},
+		{"drugs", *drugsSchema},
+		{"index", *indexSchema},
+	} {
+		f, err := os.Open(s.filename)
+		if err != nil {
+			log.Fatalf("opening %s schema from file %s: %v", s.name, s.filename, err)
+		}
+		if err := validator.Add(s.name, f); err != nil {
+			log.Fatalf("adding %s schema from file %s: %v", s.name, s.filename)
+		}
+		f.Close()
+	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
@@ -117,6 +146,8 @@ func NewValidator() Validator {
 	return make(Validator)
 }
 
+// Add adds a schema by name to the internal registry. Note that it consumes
+// the passed-in io.Reader so callers should be aware.
 func (v Validator) Add(name string, r io.Reader) error {
 	var err error
 	s := &schema{}
