@@ -6,6 +6,7 @@
         "summary_url": "http://url/to/summary/benefits/coverage",
         "marketing_url": "http://url/to/health/plan/information",
         "plan_contact": "email@address.com",
+        "years": [2016,2017],
         "network": [
             {
                 "network_tier": "PREFERRED"
@@ -24,14 +25,14 @@
                     "copay_amount": 20.0,
                     "copay_opt": "AFTER-DEDUCTIBLE",
                     "coinsurance_rate": 0.10,
-                    "coinsurance_opt": "BEFORE-DEDUCTIBLE"
+                    "coinsurance_opt": "AFTER-DEDUCTIBLE"
                 },
                 {
                     "pharmacy_type": "1-MONTH-IN-MAIL",
                     "copay_amount": 0.0,
                     "copay_opt": "NO-CHARGE",
                     "coinsurance_rate": 0.20,
-                    "coinsurance_opt": null
+                    "coinsurance_opt": "NO-CHARGE"
                 }
             ]
         },

@@ -61,7 +61,7 @@
 
             <div class="row">
                 <div class="col-md-7">
-                    <form method="post" action="/validate">
+                    <form id="textbox-form" method="post" action="/validate">
                         <div class="form-group">
                             <h3>Validate JSON Copy/Paste</h3>
                             <label for="schema">JSON schema</label>
@@ -177,7 +177,7 @@
                 var fn = function() {
                     $('[name="json"]').val(example);
                     $('[name="schema"]').val('plans');
-                    $('form').submit();
+                    $('#textbox-form').submit();
                 };
                 if (!example) {
                     $.get('/static/example.json', null, function(data, status, xhr) {
