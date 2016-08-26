@@ -13,6 +13,9 @@
             .beta { color: green; font-family: monospace; }
             .help { color: grey; font-size: smaller; }
             .spinner { max-height: 32px; max-width: 32px; }
+            .file-errors-more {display: none;}
+            .file-errors-more.expanded {display: inline;}
+            #show-more-link {display: none;}
         </style>
     </head>
     <body>
@@ -20,7 +23,7 @@
             <h2>QHP, provider, and formulary coverage JSON validator</h2>
             <h3 class="beta">BETA - 2017 schema</h3>
             <p>
-                <a href="/docs">Click here for more information</a> | <a href="#" class="example">Try an example</a>
+                <a href="/docs">Click here for more information</a> | <a href="#helpBlock" class="example">Try an example</a>
             </p>
             <div class="row">
                 <div class="col-md-7">
@@ -54,7 +57,9 @@
                     </form>
                 </div>
                  <div class="col-md-5 results">
+                    <div class="file-error-status"></div>
                     <div class="file-errors"></div>
+                    <div class="file-errors-more"></div>
                 </div>
             </div>
             <hr>
@@ -82,6 +87,7 @@
                     </form>
                 </div>
                 <div class="col-md-5 results">
+                    <div class="error-status"></div>
                     <div class="errors"></div>
                 </div>
             </div>
@@ -190,26 +196,52 @@
                 return false;
             });
 
-            function render() {
+            function render() {               
+                var more = $('.file-errors-more')
+                var moreErrorsList = '<ul class="text-danger">';
                 if (submitted) {
-                    var errorsTmpl = '<p class="' + (valid ? 'bg-success' : 'bg-danger') + '">This document is <b>' + (valid ? 'valid' : 'not valid') + '</b> ' + schema + ' JSON.';
+                    var errorsTmpl = '';
+                    var errorStatusTmpl = '<p class="' + (valid ? 'bg-success' : 'bg-danger') + '">This document is <b>' + (valid ? 'valid' : 'not valid') + '</b> ' + schema + ' JSON.';
                     if (!valid && errors && errors.length > 0) {
                         length = errors[0].split(";").length
-                        errorsTmpl += '<p class="text-danger">' + length + ' ' + (length === 1 ? 'error' : 'errors') + ':</p>';
+                        errorStatusTmpl += '<p class="text-danger">' + length + ' ' + (length === 1 ? 'error' : 'errors') + ':</p>';
+                        if (fileValidation) {
+                            errorStatusTmpl += '<a href="#" id="show-more-link">Show More...</a>'                            
+                        }                        
                         errorsTmpl += '<ul class="' + (valid ? 'text-success' : 'text-danger') + '">';
 
                         $(errors).each(function(i, err) {
-				            var errorList = err.split(";")
+				            var errorList = err.split(';');
                             for(var i in errorList) {
-                                errorsTmpl += '<li>' + errorList[i];
+                                if (i > 10) {
+                                    moreErrorsList += '<li>' + errorList[i];
+                                } else {                                   
+                                    errorsTmpl += '<li>' + errorList[i];
+                                }
                             }
                         });
                     }
+                    
                     if (fileValidation) {
+                        $('.file-error-status').html(errorStatusTmpl);                        
+                        if (length > 10) {
+                            $('#show-more-link').toggle();
+                        }
                         $('.file-errors').html(errorsTmpl);
+                        more.html(moreErrorsList);
                     } else {
+                        $('.error-status').html(errorStatusTmpl);
                         $('.errors').html(errorsTmpl);
                     }
+                    $('#show-more-link').on("click", function() {
+                        if (more.attr('class') === 'file-errors-more') {                            
+                            more.addClass('file-errors-more expanded');
+                            this.innerText = 'Show Less';
+                        } else {
+                            more.removeClass('file-errors-more expanded').addClass('file-errors-more');
+                            this.innerText = 'Show More';
+                        }
+                    });
                 }
             }
 
