@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -11,73 +12,82 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/CMSgov/marketplace-api/marketplace/adapters"
 	"github.com/CMSgov/marketplace-api/marketplace/coverage"
-	"github.com/CMSgov/marketplace-api/marketplace/drivers"
 
 	log "github.com/Sirupsen/logrus"
 	js "github.com/xeipuuv/gojsonschema"
 )
 
 var (
-	logger       *log.Logger
-	providerRepo adapters.DBProviderRepo
+	logger    *log.Logger
+	npiLookup *coverage.InMemoryNPILookup
+	npiFile   = flag.String("d", "npis.csv", "path to NPI file")
+	hasHeader = flag.Bool("r", true, "whether NPI file has a CSV header row")
 )
 
+func loadNPIs() error {
+	file, err := os.Open(*npiFile)
+	if err != nil {
+		return fmt.Errorf("error opening NPI file: %s", *npiFile)
+	}
+	defer file.Close()
+
+	npiLookup = coverage.NewInMemoryNPILookup()
+	reader := csv.NewReader(file)
+	t0 := time.Now()
+
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("error reading NPI file: %v", err)
+		}
+
+		if *hasHeader {
+			*hasHeader = false
+			continue
+		}
+
+		npi, err := strconv.Atoi(record[0])
+
+		if err != nil {
+			logger.Infof("error converting NPI string to int: %q", record[0])
+			return err
+		}
+
+		// some npis in the file do not have types associated with them
+		if record[1] != "" {
+			entity, err := strconv.Atoi(record[1])
+			if err != nil {
+				logger.Infof("error converting entity string to int: %q", record[1])
+				return err
+			}
+			npiLookup.NPIProviderType[npi] = entity
+		}
+	}
+
+	logger.Infof("loaded %d NPIs in %v", len(npiLookup.NPIProviderType), time.Now().Sub(t0))
+	return nil
+}
+
 func main() {
-	dbConnectionInfo := os.Getenv("DATABASE_URL")
+	flag.Parse()
+
 	logger = &log.Logger{
 		Out:       os.Stderr,
 		Formatter: &log.TextFormatter{FullTimestamp: true},
 		Level:     log.InfoLevel,
 	}
 
-	dbUp := make(chan error)
-	const maxDbAttempts = 2
-	dbconn := func(conninfo string, done chan<- error) (*drivers.PostgresHandler, error) {
-		var dbErr error
-
-		handler, err := drivers.NewPostgresHandler(dbConnectionInfo, logger)
-		if err != nil {
-			return nil, err
-		}
-
-		go func() {
-			for i := 0; i < maxDbAttempts; i++ {
-				time.Sleep(time.Duration(i) * time.Second)
-				if dbErr = handler.TestConnection(); dbErr != nil {
-					logger.WithError(dbErr).Error("db connection error")
-					continue
-				}
-				break
-			}
-			dbUp <- dbErr
-		}()
-
-		return handler, nil
+	if err := loadNPIs(); err != nil {
+		logger.Fatalf("error loading npis: %v", err)
 	}
-
-	dbHandler, err := dbconn(dbConnectionInfo, dbUp)
-	if err != nil {
-		panic(err)
-	}
-
-	waitDbUp := func(dbUp <-chan error) {
-		if err = <-dbUp; err != nil {
-			fmt.Printf("err = %+v\n", err)
-			logger.WithError(err).Fatalf("couldn't connect to db, giving up")
-		}
-	}
-
-	waitDbUp(dbUp)
-
-	dbHandlers := make(map[string]adapters.DBHandler)
-	dbHandlers["DBProviderRepo"] = dbHandler
-
-	providerRepo = *adapters.NewDBProviderRepo(dbHandlers)
 
 	var (
 		plansSchema     = flag.String("plans", "plans_schema.json", "plans JSON schema")
@@ -85,8 +95,6 @@ func main() {
 		drugsSchema     = flag.String("drugs", "drugs_schema.json", "drugs JSON schema")
 		indexSchema     = flag.String("index", "index_schema.json", "index JSON schema")
 	)
-
-	flag.Parse()
 
 	validator := NewValidator()
 
@@ -128,10 +136,10 @@ func main() {
 	addr := net.JoinHostPort("0.0.0.0", port)
 	done := make(chan struct{})
 	go func() {
-		log.Fatal(http.ListenAndServe(addr, nil))
+		logger.Fatal(http.ListenAndServe(addr, nil))
 		done <- struct{}{}
 	}()
-	log.Printf("validator listening on http://%s/", addr)
+	logger.Infof("validator listening on http://%s/", addr)
 	<-done
 }
 
@@ -171,7 +179,7 @@ func (v Validator) Validate(schemaName string, jsonDoc io.Reader) error {
 		validator := &coverage.StreamingProviderValidator{
 			Dec: json.NewDecoder(jsonDoc),
 		}
-		return validator.Valid(&providerRepo)
+		return validator.Valid(npiLookup)
 
 	case "drugs":
 		validator := coverage.NewStreamingDrugValidator(jsonDoc)
@@ -185,8 +193,6 @@ func (v Validator) Validate(schemaName string, jsonDoc io.Reader) error {
 	default:
 		return ErrSchemaUnknown
 	}
-
-	return nil
 }
 
 func (v Validator) ServeFile(schemaName string, w http.ResponseWriter) {
@@ -197,7 +203,7 @@ func (v Validator) ServeFile(schemaName string, w http.ResponseWriter) {
 	}
 	w.Header().Set("Content-Type", "text/plain")
 	if _, err := w.Write(schema.contents); err != nil {
-		log.Printf("error writing schema %s contents to HTTP response: %v", err)
+		log.Printf("error writing schema %s contents to HTTP response: %v", schemaName, err)
 		http.Error(w, http.StatusText(500), 500)
 	}
 }
