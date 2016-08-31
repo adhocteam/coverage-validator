@@ -6,7 +6,13 @@
     },
     "minItems": 1,
     "definitions": {
-        "provider": {"type": "object", "oneOf": [{"$ref": "#/definitions/individual"}, {"$ref": "#/definitions/facility"}]},
+        "provider": {
+            "type": "object",
+            "oneOf": [
+                {"$ref": "#/definitions/individual"},
+                {"$ref": "#/definitions/facility"},
+                {"$ref": "#/definitions/group"}
+            ]},
         "individual": {
             "type": "object",
             "properties": {
@@ -69,6 +75,24 @@
                 }
             },
             "required": ["npi", "type", "plans", "facility_name", "facility_type", "addresses", "last_updated_on"]
+        },
+        "group": {
+            "type": "object",
+            "properties": {
+                "npi": {
+                    "type": ["string", "null"],
+                    "pattern": "^[0-9]{10}$"
+                },
+                "type": {"type": "string", "enum": ["GROUP"]},
+                "plans": {"type": "array", "items": {"$ref": "#/definitions/plan"}},
+                "group_name": {"type": "string", "minLength": 1},
+                "addresses": {"type": "array", "items": {"$ref": "#/definitions/address"}},
+                "last_updated_on": {
+                    "type": "string",
+                    "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+                }
+            },
+            "required": ["npi", "type", "plans", "group_name", "addresses", "last_updated_on"]
         },
         "plan": {
             "type": "object",
