@@ -118,6 +118,7 @@
             var valid = false;
             var schema = null;
             var errors = [];
+	    var warnings = [];
             var submitted = false;
             var fileValidation = false;
             var example = null;
@@ -141,9 +142,11 @@
                         success: function(resp) {
                             valid = resp.valid;
                             errors = resp.errors;
+			    warnings = resp.warnings;
                             schema = resp.schema;
                             submitted = true;
                             fileValidation = true;
+			    console.log(resp)
                             render();
                         },
                         dataType: "json"
@@ -204,23 +207,19 @@
                     var errorStatusTmpl = '<p class="' + (valid ? 'bg-success' : 'bg-danger') + '">This document is <b>' +
                         (valid ? 'valid' : 'not valid') + '</b> ' + schema + ' JSON.';
                     if (!valid && errors && errors.length > 0) {
-                        length = errors[0].split(";").length;
-                        errorStatusTmpl += '<p class="text-danger">' + length + ' ' + (length === 1 ? 'error' : 'errors') + ':</p>';
+                        errorStatusTmpl += '<p class="text-danger">' + errors.length + ' ' + (errors.length === 1 ? 'error' : 'errors') + ':</p>';
                         if (fileValidation) {
                             errorStatusTmpl += '<a href="#" id="show-more-link">Show more &hellip;</a>';
                         }
                         errorsTmpl += '<ul class="' + (valid ? 'text-success' : 'text-danger') + '">';
 
                         $(errors).each(function(i, err) {
-                            var errorList = err.split(';');
-                            for (var i = 0; i < errorList.length; i++) {
-                                if (i >= 10) {
-                                    moreErrorsList += '<li>' + errorList[i];
-                                } else {
-                                    errorsTmpl += '<li>' + errorList[i];
-                                }
+                            if (i >= 10) {
+                                moreErrorsList += '<li>' + err;
+                            } else {
+                                errorsTmpl += '<li>' + err;
                             }
-                        });
+			});
                     }
 
                     if (fileValidation) {
