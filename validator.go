@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/CMSgov/marketplace-api/marketplace/core"
 	"github.com/CMSgov/marketplace-api/marketplace/coverage"
 
 	log "github.com/Sirupsen/logrus"
@@ -173,14 +174,11 @@ func (v Validator) Add(name string, r io.Reader) error {
 
 var ErrSchemaUnknown = errors.New("validator: unknown schema")
 
-func (v Validator) Validate(schemaName string, jsonDoc io.Reader) error {
+func (v Validator) Validate(schemaName string, jsonDoc io.Reader) core.ValidationResult {
 	switch schemaName {
 	case "providers":
-		validator := &coverage.StreamingProviderValidator{
-			Dec: json.NewDecoder(jsonDoc),
-		}
+		validator := coverage.NewStreamingProviderValidator(jsonDoc)
 		return validator.Valid(npiLookup)
-
 	case "drugs":
 		validator := coverage.NewStreamingDrugValidator(jsonDoc)
 		return validator.Valid()
@@ -191,7 +189,7 @@ func (v Validator) Validate(schemaName string, jsonDoc io.Reader) error {
 		validator := coverage.NewStreamingPlanValidator(jsonDoc)
 		return validator.Valid()
 	default:
-		return ErrSchemaUnknown
+		return coverage.NewValidationErrorResult(ErrSchemaUnknown)
 	}
 }
 
@@ -213,31 +211,24 @@ func (v Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(405), 405)
 		return
 	}
-	var resp ValidationResult
-
+	var resp ValidationResponse
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
 		resp = multipartFormValidate(v, w, r)
 	} else {
 		jsonDoc := r.FormValue("json")
-		err := v.Validate(r.FormValue("schema"), bytes.NewBufferString(jsonDoc))
-		if err != nil {
-			resp.Valid = false
-			renderError(w, &resp, err)
-		} else {
-			resp.Valid = true
-		}
+		result := v.Validate(r.FormValue("schema"), bytes.NewBufferString(jsonDoc))
+		renderWarningsErrors(w, &resp, &result)
+		resp.Schema = r.FormValue("schema")
 	}
 
-	if resp.Valid {
-		if err := json.NewEncoder(w).Encode(resp); err != nil {
-			http.Error(w, http.StatusText(500), 500)
-		}
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, http.StatusText(500), 500)
 	}
 }
 
-func multipartFormValidate(v Validator, w http.ResponseWriter, r *http.Request) ValidationResult {
-	var resp ValidationResult
-
+func multipartFormValidate(v Validator, w http.ResponseWriter, r *http.Request) ValidationResponse {
+	var resp ValidationResponse
+	var result core.ValidationResult
 	reader, err := r.MultipartReader()
 	if err != nil {
 		logger.Errorf("There was an error: %s\n", err)
@@ -261,37 +252,42 @@ func multipartFormValidate(v Validator, w http.ResponseWriter, r *http.Request) 
 			resp.Schema = string(buff)
 		}
 		if part.FormName() == "json" {
-			err = v.Validate(resp.Schema, part)
-			if err != nil {
-				renderError(w, &resp, err)
-			} else {
-				resp.Valid = true
-			}
+			result = v.Validate(resp.Schema, part)
+			renderWarningsErrors(w, &resp, &result)
 		}
 	}
 	return resp
 }
 
-func renderError(w http.ResponseWriter, resp *ValidationResult, err error) {
-	render := func() {
-		if err := json.NewEncoder(w).Encode(resp); err != nil {
-			http.Error(w, http.StatusText(500), 500)
-		}
-	}
-
-	if err != nil {
-		if err == ErrSchemaUnknown {
+func renderWarningsErrors(w http.ResponseWriter, resp *ValidationResponse, result *core.ValidationResult) {
+	if len(result.Errs) != 0 {
+		resp.Valid = false
+		if result.Errs[0] == ErrSchemaUnknown {
 			resp.Errors = []string{fmt.Sprintf("This schema is unknown: %q", resp.Schema)}
-			render()
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				http.Error(w, http.StatusText(500), 500)
+			}
+
 		}
-		resp.Errors = []string{err.Error()}
-		render()
+	} else {
+		resp.Errors = []string{}
+		resp.Valid = true
+	}
+	for _, err := range result.Errs {
+		resp.Errors = append(resp.Errors, err.Error())
 	}
 
+	if len(result.Warnings) == 0 {
+		resp.Warnings = []string{}
+	}
+	for _, warning := range result.Warnings {
+		resp.Warnings = append(resp.Warnings, warning.Warning())
+	}
 }
 
-type ValidationResult struct {
-	Valid  bool     `json:"valid"`
-	Errors []string `json:"errors"`
-	Schema string   `json:"schema"`
+type ValidationResponse struct {
+	Valid    bool     `json:"valid"`
+	Errors   []string `json:"errors"`
+	Warnings []string `json:"warnings"`
+	Schema   string   `json:"schema"`
 }
