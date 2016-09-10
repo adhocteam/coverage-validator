@@ -16,6 +16,9 @@
             .file-errors-more {display: none;}
             .file-errors-more.expanded {display: inline;}
             #show-more-link {display: none;}
+            .file-warnings-more {display: none;}
+            .file-warnings-more.expanded {display: none;}
+            #show-more-warnings-link {display: none;}
         </style>
     </head>
     <body>
@@ -57,6 +60,9 @@
                     </form>
                 </div>
                  <div class="col-md-5 results">
+                    <div class="file-status"></div>
+                    <div class="file-warnings"></div>
+                    <div class="file-warnings-more"></div>
                     <div class="file-error-status"></div>
                     <div class="file-errors"></div>
                     <div class="file-errors-more"></div>
@@ -118,7 +124,7 @@
             var valid = false;
             var schema = null;
             var errors = [];
-	    var warnings = [];
+        var warnings = [];
             var submitted = false;
             var fileValidation = false;
             var example = null;
@@ -142,16 +148,15 @@
                         success: function(resp) {
                             valid = resp.valid;
                             errors = resp.errors;
-			    warnings = resp.warnings;
+                            warnings = resp.warnings;
                             schema = resp.schema;
                             submitted = true;
                             fileValidation = true;
-			    console.log(resp)
                             render();
                         },
                         dataType: "json"
-                        });
-                    jqXhr.always(function() {
+                    });
+                    jqXhr.always(function(data, status, error) {
                         $('.spinner').hide();
                         $('#validate-file-btn, #json').prop('disabled', false);
                     });
@@ -200,12 +205,32 @@
             });
 
             function render() {
+                var moreWarnings = $('.file-warnings-more');
+                var moreWarningsList = '<ul class="text-warning">';
                 var more = $('.file-errors-more');
                 var moreErrorsList = '<ul class="text-danger">';
                 if (submitted) {
+
                     var errorsTmpl = '';
-                    var errorStatusTmpl = '<p class="' + (valid ? 'bg-success' : 'bg-danger') + '">This document is <b>' +
+                    var statusTmpl = '<p class="' + (valid ? 'bg-success' : 'bg-danger') + '">This document is <b>' +
                         (valid ? 'valid' : 'not valid') + '</b> ' + schema + ' JSON.';
+                    var warningsTmpl = '';
+                    var errorStatusTmpl = '';
+                    if (warnings && warnings.length > 0) {
+                        var warningsStatusTmpl = '<p class="text-warning">This document has ' + warnings.length + ' ' + (warnings.length === 1 ? 'warning' : 'warnings') + ':</p>';
+                        if (fileValidation) {
+                            warningsStatusTmpl += '<a href="#" id="show-more-warnings-link">Show more &hellip;</a>';
+                        }
+                        warningsTmpl += '<ul class="text-warning">';
+                        $(warnings).each(function(i, warning) {
+                            if (i >= 10) {
+                                moreWarningsList += '<li>' + warning;
+                            } else {
+                                warningsTmpl += '<li>' + warning;
+                            }
+                        });
+                        statusTmpl += warningsStatusTmpl;
+                    }
                     if (!valid && errors && errors.length > 0) {
                         errorStatusTmpl += '<p class="text-danger">' + errors.length + ' ' + (errors.length === 1 ? 'error' : 'errors') + ':</p>';
                         if (fileValidation) {
@@ -219,26 +244,42 @@
                             } else {
                                 errorsTmpl += '<li>' + err;
                             }
-			});
+                        });
                     }
 
                     if (fileValidation) {
-                        $('.file-error-status').html(errorStatusTmpl);
-                        if (length > 10) {
+                        $('.file-status').html(statusTmpl);
+                        if (warnings.length > 10) {
+                            $('#show-more-warnings-link').toggle();
+                        }
+                        if (errors.length > 10) {
                             $('#show-more-link').toggle();
                         }
+                        $('.file-warnings').html(warningsTmpl);
+                        moreWarnings.html(moreWarningsList);
+                        $('.file-error-status').html(errorStatusTmpl)
                         $('.file-errors').html(errorsTmpl);
                         more.html(moreErrorsList);
                     } else {
                         $('.error-status').html(errorStatusTmpl);
                         $('.errors').html(errorsTmpl);
                     }
+
                     $('#show-more-link').on("click", function() {
                         if (!more.hasClass('expanded')) {
                             more.addClass('expanded');
                             $(this).html('Show fewer &hellip;');
                         } else {
                             more.removeClass('expanded');
+                            $(this).html('Show more &hellip;');
+                        }
+                    });
+                    $('#show-more-warnings-link').on("click", function() {
+                        if (!moreWarnings.hasClass('expanded')) {
+                            moreWarnings.addClass('expanded');
+                            $(this).html('Show fewer &hellip;');
+                        } else {
+                            moreWarnings.removeClass('expanded');
                             $(this).html('Show more &hellip;');
                         }
                     });

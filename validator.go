@@ -221,11 +221,8 @@ func (v Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		renderWarningsErrors(w, &resp, &result)
 	}
 
-	if resp.Valid {
-
-		if err := json.NewEncoder(w).Encode(resp); err != nil {
-			http.Error(w, http.StatusText(500), 500)
-		}
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, http.StatusText(500), 500)
 	}
 }
 
@@ -279,15 +276,16 @@ func renderWarningsErrors(w http.ResponseWriter, resp *ValidationResponse, resul
 		resp.Errors = []string{}
 		resp.Valid = true
 	}
-
 	for _, err := range result.Errs {
 		resp.Errors = append(resp.Errors, err.Error())
 	}
 
+	if len(result.Warnings) == 0 {
+		resp.Warnings = []string{}
+	}
 	for _, warning := range result.Warnings {
 		resp.Warnings = append(resp.Warnings, warning.Warning())
 	}
-	render()
 }
 
 type ValidationResponse struct {
