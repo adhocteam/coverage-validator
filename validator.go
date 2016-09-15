@@ -174,19 +174,19 @@ func (v Validator) Add(name string, r io.Reader) error {
 
 var ErrSchemaUnknown = errors.New("validator: unknown schema")
 
-func (v Validator) Validate(schemaName string, jsonDoc io.Reader) core.ValidationResult {
+func (v Validator) Validate(schemaName string, schemaYearFlag int, jsonDoc io.Reader) core.ValidationResult {
 	switch schemaName {
 	case "providers":
-		validator := coverage.NewStreamingProviderValidator(jsonDoc)
+		validator := coverage.NewStreamingProviderValidator(jsonDoc, schemaYearFlag)
 		return validator.Valid(npiLookup)
 	case "drugs":
-		validator := coverage.NewStreamingDrugValidator(jsonDoc)
+		validator := coverage.NewStreamingDrugValidator(jsonDoc, schemaYearFlag)
 		return validator.Valid()
 	case "index":
 		validator := coverage.NewIndexDocValidator(jsonDoc)
 		return validator.Validate()
 	case "plans":
-		validator := coverage.NewStreamingPlanValidator(jsonDoc)
+		validator := coverage.NewStreamingPlanValidator(jsonDoc, schemaYearFlag)
 		return validator.Valid()
 	default:
 		return coverage.NewValidationErrorResult(ErrSchemaUnknown)
@@ -216,13 +216,25 @@ func (v Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		resp = multipartFormValidate(v, w, r)
 	} else {
 		jsonDoc := r.FormValue("json")
-		result := v.Validate(r.FormValue("schema"), bytes.NewBufferString(jsonDoc))
+		year, err := strconv.Atoi(r.FormValue("schemaYear"))
+		if err != nil {
+			logger.Errorf("Error converting schemaYear %q to int", r.FormValue("schemaYear"))
+		}
+		resp.SchemaYear = schemaYearFlagFromYear(year)
+		result := v.Validate(r.FormValue("schema"), resp.SchemaYear, bytes.NewBufferString(jsonDoc))
 		renderWarningsErrors(w, &resp, &result)
 		resp.Schema = r.FormValue("schema")
 	}
 
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		http.Error(w, http.StatusText(500), 500)
+	}
+}
+func schemaYearFlagFromYear(year int) int {
+	if year == 2016 {
+		return 0x1
+	} else {
+		return 0x2
 	}
 }
 
@@ -243,7 +255,17 @@ func multipartFormValidate(v Validator, w http.ResponseWriter, r *http.Request) 
 				logger.Errorf("There was an error: %s\n", err)
 			}
 		}
-
+		if part.FormName() == "schemaYear" {
+			buff, err := ioutil.ReadAll(part)
+			if err != nil {
+				logger.Errorf("Error reading schema year - %+v\n", err)
+			}
+			year, err := strconv.Atoi(string(buff))
+			if err != nil {
+				logger.Errorf("Error converting schema year to int")
+			}
+			resp.SchemaYear = schemaYearFlagFromYear(year)
+		}
 		if part.FormName() == "schema" {
 			buff, err := ioutil.ReadAll(part)
 			if err != nil {
@@ -252,9 +274,10 @@ func multipartFormValidate(v Validator, w http.ResponseWriter, r *http.Request) 
 			resp.Schema = string(buff)
 		}
 		if part.FormName() == "json" {
-			result = v.Validate(resp.Schema, part)
+			result = v.Validate(resp.Schema, resp.SchemaYear, part)
 			renderWarningsErrors(w, &resp, &result)
 		}
+
 	}
 	return resp
 }
@@ -286,8 +309,9 @@ func renderWarningsErrors(w http.ResponseWriter, resp *ValidationResponse, resul
 }
 
 type ValidationResponse struct {
-	Valid    bool     `json:"valid"`
-	Errors   []string `json:"errors"`
-	Warnings []string `json:"warnings"`
-	Schema   string   `json:"schema"`
+	Valid      bool     `json:"valid"`
+	Errors     []string `json:"errors"`
+	Warnings   []string `json:"warnings"`
+	Schema     string   `json:"schema"`
+	SchemaYear int      `json:"year"`
 }

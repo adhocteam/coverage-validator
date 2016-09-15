@@ -41,6 +41,12 @@
                                 <option value="index">Index</option>
                             </select>
                             <span id="schemaHelp" class="help-block">The schema of the JSON document to be validated.</span>
+                            <label for="schemaYear">Schema Year</label>
+                            <select class="form-control" id="schemaYear" name="schemaYear" aria-describedby="schemaYearHelp">
+                                <option value="2017" selected>2017</option>
+                                <option value="2016">2016</option>
+                            </select>
+                            <span id="schemaYearHelp" class="help-block">The schema Year of the JSON document to be validated.</span>
                         </div>
                         <div class="form-group">
                             <label class="btn btn-default btn-file">
@@ -83,6 +89,12 @@
                                 <option value="index">Index</option>
                             </select>
                             <span id="schemaHelp" class="help-block">The schema of the JSON document to be validated.</span>
+                            <label for="schemaYear">Schema Year</label>
+                            <select class="form-control" id="schemaYear" name="schemaYear" aria-describedby="schemaYearHelp">
+                                <option value="2017" selected>2017</option>
+                                <option value="2016">2016</option>
+                            </select>
+                            <span id="schemaYearHelp" class="help-block">The schema Year of the JSON document to be validated.</span>
                         </div>
                         <div class="form-group">
                             <label for="json">JSON</label>
@@ -125,6 +137,7 @@
         $(function() {
             var valid = false;
             var schema = null;
+            var schemaYear = null;
             var errors = [];
             var warnings = [];
             var submitted = false;
@@ -137,8 +150,11 @@
                 var jsonText = $('#json');
                 if (jsonText.val() === '' && file.val() !== '') {
                     schema = $('#schema').val();
+                    schemaYear = $('#schemaYear').val();
                     var data = new FormData();
+                    // order matters here, json must be last
                     data.append('schema', schema);
+                    data.append('schemaYear', schemaYear);
                     data.append('json', file[0].files[0]);
                     var jqXhr = $.ajax({
                         type: "POST",
@@ -265,9 +281,7 @@
                         more.html(moreErrorsList);
                     } else {
                         $('.status').html(statusTmpl);
-                        console.log(statusTmpl);
                         $('.warnings').html(warningsTmpl);
-                        console.log(warningsTmpl)
                         $('.error-status').html(errorStatusTmpl)
                         $('.errors').html(errorsTmpl);
                     }
