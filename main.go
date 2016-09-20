@@ -221,11 +221,6 @@ func (v Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			logger.Errorf("error converting schemaYear %q to int", r.FormValue("schemaYear"))
 		}
 		resp.SchemaYear = coverage.Year2SchemaYear(year)
-		if !coverage.ValidSchemaYear(resp.SchemaYear) {
-			logger.Errorf("invalid schema year: %d", resp.SchemaYear)
-			http.Error(w, http.StatusText(400), 400)
-			return
-		}
 		result := v.Validate(r.FormValue("schema"), resp.SchemaYear, bytes.NewBufferString(jsonDoc))
 		renderWarningsErrors(w, &resp, &result)
 		resp.Schema = r.FormValue("schema")
