@@ -1,0 +1,47 @@
+.beta {
+    color: green;
+    font-family: monospace;
+}
+
+.spinner {
+    max-height: 32px;
+    max-width: 32px;
+}
+
+.validation-results .validity p {
+    padding: 20px;
+}
+
+.show-more-link {
+    padding: 5px 20px;
+}
+
+.error-list .description {
+    font-weight: bold;
+    padding: 5px 20px;
+}
+
+footer .fork {
+    text-align: center;
+    padding: 20px 0 40px;
+}
+
+.help {
+    margin: 1em 0;
+    color: grey;
+    font-size: smaller;
+}
+
+.fixed-results .validation-results {
+    top: 20px;
+    position: fixed;
+}
+
+.validation-results {
+    background: white;
+}
+
+textarea[name=json] {
+    font-family: monospace;
+    font-size: 12px;
+}

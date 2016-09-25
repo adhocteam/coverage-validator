@@ -9,6 +9,9 @@ all: install
 install:
 	go install
 
+build-react-app:
+	make -C app
+
 .PHONY: cross-compile
 
 cross-compile:
