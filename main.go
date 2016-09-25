@@ -86,9 +86,11 @@ func main() {
 		Level:     log.InfoLevel,
 	}
 
-	if err := loadNPIs(); err != nil {
-		logger.Fatalf("error loading npis: %v", err)
-	}
+	go func() {
+		if err := loadNPIs(); err != nil {
+			logger.Fatalf("error loading npis: %v", err)
+		}
+	}()
 
 	var (
 		plansSchema     = flag.String("plans", "plans_schema.json", "plans JSON schema")
@@ -137,11 +139,25 @@ func main() {
 	addr := net.JoinHostPort("0.0.0.0", port)
 	done := make(chan struct{})
 	go func() {
-		logger.Fatal(http.ListenAndServe(addr, nil))
+		logger.Fatal(http.ListenAndServe(addr, requestLogger(simpleCors(http.DefaultServeMux))))
 		done <- struct{}{}
 	}()
 	logger.Infof("validator listening on http://%s/", addr)
 	<-done
+}
+
+func simpleCors(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		h.ServeHTTP(w, r)
+	})
+}
+
+func requestLogger(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL.Path)
+		h.ServeHTTP(w, r)
+	})
 }
 
 type Validator map[string]*schema
