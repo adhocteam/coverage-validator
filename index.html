@@ -271,12 +271,13 @@
                         if (warnings.length > 10) {
                             $('#show-more-warnings-link').toggle();
                         }
+                        $('.file-error-status').html(errorStatusTmpl)
                         if (errors.length > 10) {
                             $('#show-more-link').toggle();
                         }
                         $('.file-warnings').html(warningsTmpl);
                         moreWarnings.html(moreWarningsList);
-                        $('.file-error-status').html(errorStatusTmpl)
+
                         $('.file-errors').html(errorsTmpl);
                         more.html(moreErrorsList);
                     } else {

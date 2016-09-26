@@ -174,19 +174,21 @@ func (v Validator) Add(name string, r io.Reader) error {
 
 var ErrSchemaUnknown = errors.New("validator: unknown schema")
 
+const maxValidationErrs = 500
+
 func (v Validator) Validate(schemaName string, schemaYearFlag int, jsonDoc io.Reader) core.ValidationResult {
 	switch schemaName {
 	case "providers":
-		validator := coverage.NewStreamingProviderValidator(jsonDoc, schemaYearFlag)
+		validator := coverage.NewStreamingProviderValidator(jsonDoc, schemaYearFlag, maxValidationErrs)
 		return validator.Valid(npiLookup)
 	case "drugs":
-		validator := coverage.NewStreamingDrugValidator(jsonDoc, schemaYearFlag)
+		validator := coverage.NewStreamingDrugValidator(jsonDoc, schemaYearFlag, maxValidationErrs)
 		return validator.Valid()
 	case "index":
 		validator := coverage.NewIndexDocValidator(jsonDoc)
 		return validator.Validate()
 	case "plans":
-		validator := coverage.NewStreamingPlanValidator(jsonDoc, schemaYearFlag)
+		validator := coverage.NewStreamingPlanValidator(jsonDoc, schemaYearFlag, maxValidationErrs)
 		return validator.Valid()
 	default:
 		return coverage.NewValidationErrorResult(ErrSchemaUnknown)
@@ -221,7 +223,7 @@ func (v Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			logger.Errorf("error converting schemaYear %q to int", r.FormValue("schemaYear"))
 		}
 		resp.SchemaYear = coverage.Year2SchemaYear(year)
-		result := v.Validate(r.FormValue("schema"), resp.SchemaYear, bytes.NewBufferString(jsonDoc))
+		result := v.Validate(r.FormValue("schema"), resp.SchemaYear, coverage.NewTrackingReader(bytes.NewBufferString(jsonDoc)))
 		renderWarningsErrors(w, &resp, &result)
 		resp.Schema = r.FormValue("schema")
 	}
@@ -267,10 +269,9 @@ func multipartFormValidate(v Validator, w http.ResponseWriter, r *http.Request) 
 			resp.Schema = string(buff)
 		}
 		if part.FormName() == "json" {
-			result = v.Validate(resp.Schema, resp.SchemaYear, part)
+			result = v.Validate(resp.Schema, resp.SchemaYear, coverage.NewTrackingReader(part))
 			renderWarningsErrors(w, &resp, &result)
 		}
-
 	}
 	return resp
 }
