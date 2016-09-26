@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -221,7 +220,11 @@ func (v Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			logger.Errorf("error converting schemaYear %q to int", r.FormValue("schemaYear"))
 		}
 		resp.SchemaYear = coverage.Year2SchemaYear(year)
-		result := v.Validate(r.FormValue("schema"), resp.SchemaYear, bytes.NewBufferString(jsonDoc))
+
+		// playing with TrackingReader
+		tr := coverage.NewTrackingReader(jsonDoc)
+
+		result := v.Validate(r.FormValue("schema"), resp.SchemaYear, tr)
 		renderWarningsErrors(w, &resp, &result)
 		resp.Schema = r.FormValue("schema")
 	}
