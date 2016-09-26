@@ -221,7 +221,11 @@ func (v Validator) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			logger.Errorf("error converting schemaYear %q to int", r.FormValue("schemaYear"))
 		}
 		resp.SchemaYear = coverage.Year2SchemaYear(year)
-		result := v.Validate(r.FormValue("schema"), resp.SchemaYear, bytes.NewBufferString(jsonDoc))
+
+		// playing with TrackingReader
+		tr := coverage.NewTrackingReader(bytes.NewBufferString(jsonDoc))
+
+		result := v.Validate(r.FormValue("schema"), resp.SchemaYear, tr)
 		renderWarningsErrors(w, &resp, &result)
 		resp.Schema = r.FormValue("schema")
 	}
@@ -267,7 +271,8 @@ func multipartFormValidate(v Validator, w http.ResponseWriter, r *http.Request) 
 			resp.Schema = string(buff)
 		}
 		if part.FormName() == "json" {
-			result = v.Validate(resp.Schema, resp.SchemaYear, part)
+			tr := coverage.NewTrackingReader(part)
+			result = v.Validate(resp.Schema, resp.SchemaYear, tr)
 			renderWarningsErrors(w, &resp, &result)
 		}
 
