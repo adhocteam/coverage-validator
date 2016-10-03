@@ -17,7 +17,7 @@
             .file-errors-more.expanded {display: inline;}
             #show-more-link {display: none;}
             .file-warnings-more {display: none;}
-            .file-warnings-more.expanded {display: none;}
+            .file-warnings-more.expanded {display: inline;}
             #show-more-warnings-link {display: none;}
         </style>
     </head>
@@ -229,7 +229,6 @@
                 var more = $('.file-errors-more');
                 var moreErrorsList = '<ul class="text-danger">';
                 if (submitted) {
-
                     var errorsTmpl = '';
                     var statusTmpl = '<p class="' + (valid ? 'bg-success' : 'bg-danger') + '">This document is <b>' +
                         (valid ? 'valid' : 'not valid') + '</b> ' + schema + ' JSON.';
@@ -268,6 +267,11 @@
 
                     if (fileValidation) {
                         $('.file-status').html(statusTmpl);
+                        $('.file-warnings').html(warningsTmpl);
+                        moreWarnings.html(moreWarningsList);
+
+                        $('.file-errors').html(errorsTmpl);
+                        more.html(moreErrorsList);
                         if (warnings.length > 10) {
                             $('#show-more-warnings-link').toggle();
                         }
@@ -275,11 +279,6 @@
                         if (errors.length > 10) {
                             $('#show-more-link').toggle();
                         }
-                        $('.file-warnings').html(warningsTmpl);
-                        moreWarnings.html(moreWarningsList);
-
-                        $('.file-errors').html(errorsTmpl);
-                        more.html(moreErrorsList);
                     } else {
                         $('.status').html(statusTmpl);
                         $('.warnings').html(warningsTmpl);
