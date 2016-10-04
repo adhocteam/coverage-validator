@@ -64,7 +64,8 @@
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+					"minItems": 1
                 },
                 "addresses": {"type": "array", "items": {"$ref": "#/definitions/address"}},
                 "last_updated_on": {
