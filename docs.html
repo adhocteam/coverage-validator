@@ -43,15 +43,15 @@
 
             <p>The resource expects to be requested via HTTP <code>POST</code>, and expects two values in the body of the request:
             <ul>
-                <li><b><code>doctype</code></b>: one of <code>plans</code>, <code>providers</code>, or <code>drugs</code>; and
+                <li><b><code>schema</code></b>: one of <code>plans</code>, <code>providers</code>, or <code>drugs</code>; and
                 <li><b><code>json</code></b>: a string of the JSON document to be validated.
             </ul>
 
             <p>For example, assume <code>plans.json</code> is a local file containing the document to be validated:
             </p>
 
-            <pre>$ curl -F doctype=plans -F json=\&lt;plans.json https://qhp-validator.herokuapp.com/validate
-{"valid":true,"errors":null,"doctype":"plans","pprint":"[...]"}</pre>
+            <pre>$ curl -F schema=plans -F json=\&lt;plans.json https://qhp-validator.herokuapp.com/validate
+{"valid":true,"errors":null,"schema":"plans","pprint":"[...]"}</pre>
 
         </div>
         <script>
