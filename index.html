@@ -30,7 +30,7 @@
             </p>
             <div class="row">
                 <div class="col-md-7">
-                    <form method="post" action="/validate" enctype="multipart/form-data">
+                    <form method="post" id="file-form" action="/validate" enctype="multipart/form-data">
                         <div class="form-group">
                             <h3>Validate a file</h3>
                             <label for="schema">JSON schema</label>
@@ -144,65 +144,72 @@
             var fileValidation = false;
             var example = null;
 
-            $('form').submit(function(e) {
+            $('#file-form').submit(function(e) {
                 e.preventDefault();
                 var file = $('#file');
                 var jsonText = $('#json');
-                if (jsonText.val() === '' && file.val() !== '') {
-                    schema = $('#schema').val();
-                    schemaYear = $('#schemaYear').val();
-                    var data = new FormData();
-                    // order matters here, json must be last
-                    data.append('schema', schema);
-                    data.append('schemaYear', schemaYear);
-                    data.append('json', file[0].files[0]);
-                    var jqXhr = $.ajax({
-                        type: "POST",
-                        url: "/validate",
-                        cache: false,
-                        data: data,
-                        contentType: false,
-                        processData: false,
-                        success: function(resp) {
-                            valid = resp.valid;
-                            errors = resp.errors;
-                            warnings = resp.warnings;
-                            schema = resp.schema;
-                            submitted = true;
-                            fileValidation = true;
-                            render();
-                        },
-                        dataType: "json"
-                    });
-                    jqXhr.always(function(data, status, error) {
-                        $('.spinner').hide();
-                        $('#validate-file-btn, #json').prop('disabled', false);
-                    });
-                    $('.spinner').show();
-                    $('#validate-file-btn, #json').prop('disabled', true);
-                } else {
-                    fileValidation = false;
 
-                    var jqXhr = $.ajax({
-                        type: "POST",
-                        url: "/validate",
-                        data: $(this).serialize(),
-                        success: function(resp) {
-                            valid = resp.valid;
-                            errors = resp.errors;
-                            schema = resp.schema;
-                            warnings = resp.warnings;
-                            fileValidation = false;
-                            submitted = true;
-                            render();
-                        },
-                        dataType: "json"
-                    });
-                    jqXhr.always(function() {
-                        $('#validate-btn, #json').prop('disabled', false);
-                    });
-                    $('#validate-btn, #json').prop('disabled', true);
-                }
+                schema = $('#schema').val();
+                schemaYear = $('#schemaYear').val();
+                var data = new FormData();
+                // order matters here, json must be last
+                data.append('schema', schema);
+                data.append('schemaYear', schemaYear);
+                data.append('json', file[0].files[0]);
+                var jqXhr = $.ajax({
+                    type: "POST",
+                    url: "/validate",
+                    cache: false,
+                    data: data,
+                    contentType: false,
+                    processData: false,
+                    success: function(resp) {
+                        valid = resp.valid;
+                        errors = resp.errors;
+                        warnings = resp.warnings;
+                        schema = resp.schema;
+                        submitted = true;
+                        fileValidation = true;
+                        render();
+                    },
+                    dataType: "json"
+                });
+                jqXhr.always(function(data, status, error) {
+                    $('.spinner').hide();
+                    $('#validate-file-btn, #json').prop('disabled', false);
+                    $('#validate-btn, #json').prop('disabled', false);
+                });
+                $('.spinner').show();
+                $('#validate-file-btn, #json').prop('disabled', true);
+                $('#validate-btn, #json').prop('disabled', true);
+            });
+            $('#textbox-form').submit(function(e) {
+                e.preventDefault();
+                var file = $('#file');
+                var jsonText = $('#json');
+                fileValidation = false;
+
+                var jqXhr = $.ajax({
+                    type: "POST",
+                    url: "/validate",
+                    data: $(this).serialize(),
+                    success: function(resp) {
+                        valid = resp.valid;
+                        errors = resp.errors;
+                        schema = resp.schema;
+                        warnings = resp.warnings;
+                        fileValidation = false;
+                        submitted = true;
+                        render();
+                    },
+                    dataType: "json"
+                });
+                jqXhr.always(function() {
+                    $('#validate-btn, #json').prop('disabled', false);
+                    $('#validate-file-btn, #json').prop('disabled', false);
+                });
+                $('#validate-btn, #json').prop('disabled', true);
+                $('#validate-file-btn, #json').prop('disabled', true);
             });
 
             $('.example').click(function(e) {
