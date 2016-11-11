@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -180,13 +181,13 @@ func (v Validator) Validate(schemaName string, schemaYearFlag int, jsonDoc io.Re
 	switch schemaName {
 	case "providers":
 		validator := coverage.NewStreamingProviderValidator(jsonDoc, schemaYearFlag, maxValidationErrs)
-		return validator.Valid(npiLookup)
+		return validator.Valid(context.Background(), npiLookup)
 	case "drugs":
 		validator := coverage.NewStreamingDrugValidator(jsonDoc, schemaYearFlag, maxValidationErrs)
 		return validator.Valid()
 	case "index":
-		validator := coverage.NewIndexDocValidator(jsonDoc)
-		return validator.Validate()
+		validator := coverage.NewStreamingIndexDocValidator(jsonDoc)
+		return validator.Validate(context.Background())
 	case "plans":
 		validator := coverage.NewStreamingPlanValidator(jsonDoc, schemaYearFlag, maxValidationErrs)
 		return validator.Valid()
