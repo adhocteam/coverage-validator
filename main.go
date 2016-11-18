@@ -186,7 +186,7 @@ func (v Validator) Validate(schemaName string, schemaYearFlag int, jsonDoc io.Re
 		validator := coverage.NewStreamingDrugValidator(jsonDoc, schemaYearFlag, maxValidationErrs)
 		return validator.Valid()
 	case "index":
-		validator := coverage.NewStreamingIndexDocValidator(jsonDoc)
+		validator := coverage.NewIndexDocValidator(jsonDoc)
 		return validator.Validate(context.Background())
 	case "plans":
 		validator := coverage.NewStreamingPlanValidator(jsonDoc, schemaYearFlag, maxValidationErrs)
