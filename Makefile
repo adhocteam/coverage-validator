@@ -1,6 +1,6 @@
 TARGET_OS = linux
 TARGET_ARCH = amd64
-RELEASE_REPO = $(HOME)/work/coverage-validator-release
+RELEASE_REPO ?= $(GO_PATH)/adhoc/coverage-validator-release
 RAWNPPESCSV ?= npidata_20050523-20170108.csv
 
 SOURCES = index.html index_schema.json providers_schema.json plans_schema.json drugs_schema.json static npis.csv Procfile
@@ -21,4 +21,4 @@ release: cross-compile npis.csv
 	rsync -av $(SOURCES) $(RELEASE_REPO)
 
 npis.csv:
-	./tools/make-npi-csv < $(RAWNPPESCSV) > $@
+	./tools/npi-csv < $(RAWNPPESCSV) > $@

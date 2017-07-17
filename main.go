@@ -184,7 +184,7 @@ func (v Validator) Validate(schemaName string, schemaYearFlag int, jsonDoc io.Re
 		return validator.Valid(context.Background(), npiLookup)
 	case "drugs":
 		validator := coverage.NewStreamingDrugValidator(jsonDoc, schemaYearFlag, maxValidationErrs)
-		return validator.Valid()
+		return validator.Valid(context.Background())
 	case "index":
 		validator := coverage.NewIndexDocValidator(jsonDoc)
 		return validator.Validate(context.Background())

@@ -8,12 +8,13 @@ repository][1].
 Updating NPI data
 ------------------
 
-To update the NPI data, download the latest raw NPI data from the NPPES site and
-extract the ZIP archive in this directory locally. Then, invoke `make` to
+To update the NPI data, download the latest raw NPI data from the NPPES site
+which is hosted at CMS and is [freely available to download][npi_files].
+Extract the ZIP archive in this directory locally. Then, invoke `make` to
 generate the updated CSV file:
 
 ``` shell
-$ RAWNPPESCSV=name-of-nppes.csv make npis.csv
+$ RAWNPPESCSV=name-of-nppes.csv RELEASE_REPO=path-to-release-repo make npis.csv
 ```
 
 Making the release
@@ -29,3 +30,4 @@ $ make release
 ```
 
 [1]: https://github.com/adhocteam/coverage-validator-release
+[npi_files]: http://download.cms.gov/nppes/NPI_Files.html
