@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -e
+set -o pipefail
+
+awk -F, '{ printf "%s,%s\n", $1, $2 }' | tr -d '"'
