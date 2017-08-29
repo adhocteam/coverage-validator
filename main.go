@@ -17,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/CMSgov/marketplace-api/marketplace/core"
-	"github.com/CMSgov/marketplace-api/marketplace/coverage"
+	"github.cms.gov/CMS-WDS/marketplace-api/marketplace/core"
+	"github.cms.gov/CMS-WDS/marketplace-api/marketplace/coverage"
 
 	log "github.com/Sirupsen/logrus"
 	js "github.com/xeipuuv/gojsonschema"
