@@ -178,6 +178,11 @@ var ErrSchemaUnknown = errors.New("validator: unknown schema")
 const maxValidationErrs = 500
 
 func (v Validator) Validate(schemaName string, schemaYearFlag int, jsonDoc io.Reader) core.ValidationResult {
+	// validation is the same for 2017 and 2018, so use 2017 for 2018
+	if schemaYearFlag == coverage.SchemaYear2018 {
+		schemaYearFlag = coverage.SchemaYear2017
+	}
+
 	switch schemaName {
 	case "providers":
 		validator := coverage.NewStreamingProviderValidator(jsonDoc, schemaYearFlag, maxValidationErrs)
