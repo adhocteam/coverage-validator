@@ -31,8 +31,6 @@
             document type, and hitting the submit button to get a validation
             report.</p>
 
-            <p align="center"><img src="/static/validator_example.gif" width="960" style="border: 2px solid #ccc; padding: 10px"></p>
-
             <h5>Web service</h5>
 
             <p>The tool provides a resource at <code>/validate</code> for
@@ -41,16 +39,17 @@
             non-interactively.
             </p>
 
-            <p>The resource expects to be requested via HTTP <code>POST</code>, and expects two values in the body of the request:
+            <p>The resource expects to be requested via HTTP <code>POST</code>, and expects three values in the body of the request:
             <ul>
-                <li><b><code>doctype</code></b>: one of <code>plans</code>, <code>providers</code>, or <code>drugs</code>; and
+                <li><b><code>schema</code></b>: one of <code>plans</code>, <code>providers</code>, <code>drugs</code>, or <code>index</code>; and
+                <li><b><code>schemaYear</code></b>: the year of the schema
                 <li><b><code>json</code></b>: a string of the JSON document to be validated.
             </ul>
 
             <p>For example, assume <code>plans.json</code> is a local file containing the document to be validated:
             </p>
 
-            <pre>$ curl -F doctype=plans -F json=\&lt;plans.json https://qhp-validator.herokuapp.com/validate
+            <pre>$ curl -F schemaYear=2017 -F schema=plans -F json=\&lt;plans.json https://coverage-validator-beta.herokuapp.com/validate
 {"valid":true,"errors":null,"doctype":"plans","pprint":"[...]"}</pre>
 
         </div>

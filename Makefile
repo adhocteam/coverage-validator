@@ -1,9 +1,9 @@
 TARGET_OS = linux
 TARGET_ARCH = amd64
 RELEASE_REPO ?= $(GOPATH)/src/github.com/adhocteam/coverage-validator-release
-RAWNPPESCSV ?= npidata_20050523-20170108.csv
+RAWNPPESCSV ?= npidata_20050523-20171112.csv
 
-SOURCES = index.html index_schema.json providers_schema.json plans_schema.json drugs_schema.json static npis.csv Procfile
+SOURCES = index.html docs.html index_schema.json providers_schema.json plans_schema.json drugs_schema.json static npis.csv Procfile
 
 all: install
 
