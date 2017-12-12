@@ -1,24 +1,28 @@
 TARGET_OS = linux
 TARGET_ARCH = amd64
-RELEASE_REPO ?= $(GOPATH)/src/github.com/adhocteam/coverage-validator-release
-RAWNPPESCSV ?= npidata_20050523-20171112.csv
-
+RELEASE_DIR = /tmp/coverage-validator-release
 SOURCES = index.html docs.html index_schema.json providers_schema.json plans_schema.json drugs_schema.json static npis.csv Procfile
+NPI_URL:=
 
 all: install
 
 install:
 	go install
 
-.PHONY: cross-compile
+.PHONY: cross-compile npis.csv
 
 cross-compile:
 	GOOS=$(TARGET_OS) GOARCH=$(TARGET_ARCH) go install
 
 release: cross-compile npis.csv
-	mkdir -p $(RELEASE_REPO)/bin
-	rsync -av $(GOPATH)/bin/$(TARGET_OS)_$(TARGET_ARCH)/coverage-validator $(RELEASE_REPO)/bin/coverage-validator
-	rsync -av $(SOURCES) $(RELEASE_REPO)
+	mkdir -p /tmp/coverage-validator-release/bin
+	rsync -av $(GOPATH)/bin/$(TARGET_OS)_$(TARGET_ARCH)/coverage-validator /tmp/coverage-validator-release/bin
+	rsync -av $(SOURCES) $(RELEASE_DIR)
+	cd $(RELEASE_DIR)
+	tar -czf coverage-validator-release.tar.gz -C /tmp coverage-validator-release
 
 npis.csv:
-	./tools/npi-csv < $(RAWNPPESCSV) > $@
+	rm -f npis.csv
+	aws s3 cp $(NPI_URL) .
+	bzip2 -df npis-latest.dump.bz2
+	./tools/npi-csv < npis-latest.dump > $@
