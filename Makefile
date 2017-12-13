@@ -16,7 +16,7 @@ cross-compile:
 
 release: cross-compile npis.csv
 	mkdir -p /tmp/coverage-validator-release/bin
-	rsync -av $(GOPATH)/bin/$(TARGET_OS)_$(TARGET_ARCH)/coverage-validator /tmp/coverage-validator-release/bin
+	rsync -av $(GOPATH)/bin/coverage-validator /tmp/coverage-validator-release/bin
 	rsync -av $(SOURCES) $(RELEASE_DIR)
 	cd $(RELEASE_DIR)
 	tar -czf coverage-validator-release.tar.gz -C /tmp coverage-validator-release
