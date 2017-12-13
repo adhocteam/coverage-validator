@@ -2,7 +2,7 @@ TARGET_OS = linux
 TARGET_ARCH = amd64
 RELEASE_DIR = /tmp/coverage-validator-release
 SOURCES = index.html docs.html index_schema.json providers_schema.json plans_schema.json drugs_schema.json static npis.csv Procfile
-NPI_URL:=
+NPI_URL = $(npiURL)
 
 all: install
 
