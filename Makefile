@@ -23,6 +23,6 @@ release: cross-compile npis.csv
 
 npis.csv:
 	rm -f npis.csv
-	aws s3 cp $(NPI_URL) .
-	bzip2 -df npis-latest.dump.bz2
-	./tools/npi-csv < npis-latest.dump > $@
+	aws s3 cp $(NPI_URL) npis-latest.csv.bz2
+	bzip2 -df npis-latest.csv.bz2
+	./tools/npi-csv < npis-latest.csv> $@
