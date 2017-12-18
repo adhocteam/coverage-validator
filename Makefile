@@ -1,6 +1,6 @@
 TARGET_OS = linux
 TARGET_ARCH = amd64
-RELEASE_DIR = /tmp/coverage-validator-release
+RELEASE_DIR ?= /tmp
 SOURCES = index.html docs.html index_schema.json providers_schema.json plans_schema.json drugs_schema.json static npis.csv Procfile
 NPI_URL = $(npiURL)
 
@@ -15,11 +15,11 @@ cross-compile:
 	GOOS=$(TARGET_OS) GOARCH=$(TARGET_ARCH) go install
 
 release: cross-compile npis.csv
-	mkdir -p /tmp/coverage-validator-release/bin
-	rsync -av $(GOPATH)/bin/coverage-validator /tmp/coverage-validator-release/bin
-	rsync -av $(SOURCES) $(RELEASE_DIR)
+	mkdir -p $(RELEASE_DIR)/coverage-validator-release/bin
+	rsync -av $(GOPATH)/bin/coverage-validator $(RELEASE_DIR)/coverage-validator-release/bin
+	rsync -av $(SOURCES) $(RELEASE_DIR)/coverage-validator-release
 	cd $(RELEASE_DIR)
-	tar -czf coverage-validator-release.tar.gz -C /tmp coverage-validator-release
+	tar -czf coverage-validator-release.tar.gz -C $(RELEASE_DIR) coverage-validator-release
 
 npis.csv:
 	rm -f npis.csv
