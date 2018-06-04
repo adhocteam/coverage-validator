@@ -247,6 +247,9 @@ func multipartFormValidate(v Validator, w http.ResponseWriter, r *http.Request) 
 		logger.Errorf("There was an error: %s\n", err)
 	}
 
+	// schemaYear now defaults to 2017 (the last time the schema changed)
+	resp.SchemaYear = 2017
+
 	for {
 		part, err := reader.NextPart()
 		if err != nil {
